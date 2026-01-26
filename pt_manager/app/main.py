@@ -2,6 +2,8 @@ from fastapi import FastAPI
 
 #importa a função de inicialização do banco de dados(criação de tabelas)
 from app.db.init_db import init_db  
+from app.api.v1.clients import router as clients_router
+from app.api.v1.packs import router as packs_router
 
 app = FastAPI(
     title="PT Manager API",
@@ -23,3 +25,7 @@ def health_check() -> dict:
     Endpoint simples para verificar se a app está de pé
     """
     return {"status": "ok"}
+
+#versão da API (V1)
+app.include_router(clients_router, prefix="/api/v1")
+app.include_router(packs_router, prefix="/api/v1")
