@@ -2,6 +2,11 @@ from typing import Optional
 from pydantic import Field
 from sqlmodel import SQLModel
 
+
+# =========================
+# Pack Type
+# =========================
+
 class PackTypeCreate(SQLModel):
     """
     Payload para criação de um novo tipo de pacote.
@@ -21,6 +26,10 @@ class PackTypeRead(SQLModel):
     session_total: int
     created_at: str
     updated_at: str
+
+# =========================
+# Client Pack (purchase)
+# =========================
 
 class ClientPackPurchase(SQLModel):
     """
@@ -48,3 +57,4 @@ class ClientPackRead(SQLModel):
     archived_at: Optional[str] = None
     created_at: str
     updated_at: str
+

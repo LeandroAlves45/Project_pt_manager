@@ -9,7 +9,7 @@ router = APIRouter(prefix="/packs", tags=["packs"])
 
 @router.post("/clients/{client_id}/purchase", response_model=ClientPackRead, status_code=status.HTTP_201_CREATED)
 def purchase_pack_for_client(
-    client_id =str,
+    client_id: str,
     payload: ClientPackPurchase,
     session: Session = Depends(db_session),
 ):

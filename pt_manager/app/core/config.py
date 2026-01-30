@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     - Futuro PostgreSQL: "postgresql+asyncpg://user:pass@host:5432/dbname"
     """
     database_url: str = "sqlite:///./pt_manager.db"
-
+    api_key: str = "infoapirequestmanager258634"
+    
     class Config:
         env_file = ".env"
         extra = "ignore"

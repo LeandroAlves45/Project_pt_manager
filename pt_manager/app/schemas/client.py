@@ -18,7 +18,6 @@ class ClientCreate(SQLModel):
     sex: Optional[str] = Field(defult = None)
 
     height_cm: Optional[int] = Field(default=None, ge= 80, le= 260)
-    weight_kg: Optional[float] = Field(default=None, ge= 20, le= 500)
     objetive: Optional[str] = Field(default=None, max_length=500)
     notes: Optional[str] = None
 
@@ -39,7 +38,6 @@ class ClientUpdate(SQLModel):
     sex: Optional[str] = None
 
     height_cm: Optional[int] = Field(default=None, ge= 80, le= 260)
-    weight_kg: Optional[float] = Field(default=None, ge= 20, le= 500)
     objetive: Optional[str] = Field(default=None, max_length=500)
     notes: Optional[str] = None
 
@@ -52,19 +50,19 @@ class ClientRead(SQLModel):
     usado em respostas de API
     """
 
-    id: int
+    id: str
     full_name: str
     phone: str
-    email: Optional[EmailStr] = None
+    email: Optional[str]
 
     birth_date: date
     sex: Optional[str] 
     height_cm: Optional[int]
-    weight_kg: Optional[float]
-    objetive: Optional[str]
-    notes: Optional[str]
-    emergency_contact_name: Optional[str]
-    emergency_contact_phone: Optional[str]
+    objetive: Optional[str] = None
+    notes: Optional[str] = None
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+    status: str #ativo ou arquivado
     created_at: str
     updated_at: str
     
