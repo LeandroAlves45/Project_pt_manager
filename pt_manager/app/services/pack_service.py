@@ -1,10 +1,11 @@
 from __future__ import annotations
+from datetime import datetime, timezone
 from typing import Optional
 from sqlmodel import Session, select
 
 from app.db.models.pack import PackType, ClientPack
 from app.db.models.client import Client
-
+from app.core.db_errors import commit_or_rollback
 
 class PackService:
     """
@@ -16,11 +17,17 @@ class PackService:
     """
 
     @staticmethod
+    def now_iso() -> str:
+        """Timestamp ISO UTC sem microssegundos (compatível com SQLite)."""
+        return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    
+
+    @staticmethod
     def purchase_pack(
         session: Session,
         client_id: int,
         pack_type_id: int,
-        purchase_date: Optional[str] = None,
+        purchase_at: Optional[str] = None,
     ) -> ClientPack:
         """
         Compra um pack:
@@ -39,46 +46,39 @@ class PackService:
         if not pack_type:
             raise ValueError("Tipo de pack não encontrado.")
         
+         #definir timestamps
+        purchased_at = purchased_at or PackService.now_iso()
+        
         client_pack = ClientPack(
             client_id=client_id,
             pack_type_id=pack_type_id,
-            purchase_date=purchase_date,
-            sessions_total=pack_type.session_total,
+            purchase_at=purchased_at,
+            sessions_total=pack_type.sessions_total,
             sessions_used=0,
         )
 
         session.add(client_pack)
-        session.commit()
+        commit_or_rollback(session)
         session.refresh(client_pack)
         return client_pack  
     
     @staticmethod
-    def get_active_packs(session: Session, client_id: str) -> Optional[ClientPack]:
+    def get_active_pack(session: Session, client_id: str) -> ClientPack:
         """
         Retorna os packs ativos de um cliente.
         Pack ativo é aquele que não está cancelado e tem sessões restantes.
         """
 
+        now = PackService.now_iso()
+
+
         statement = (select(ClientPack)
         .where(ClientPack.client_id == client_id)
         .where(ClientPack.archived_at.is_(None))
-        .where(ClientPack.canceled_at.is_(None))
-        .where(ClientPack.sessions_used < ClientPack.sessions_total)
-        )
-        
-        from datetime import datetime, timezone
-
-        now_iso = datetime.now(timezone.utc).replace (microsecond=0).isoformat()
-        statement = (
-            select(ClientPack)
-            .where(ClientPack.client_id == client_id)   
-            .where(ClientPack.archived_at.is_(None))    
-            .where(ClientPack.canceled_at.is_(None))
-            .where(ClientPack.sessions_used < ClientPack.sessions_total)
-            .where(ClientPack.purchase_date <= now_iso)
-            .order_by(ClientPack.purchase_date())
-            .limit(1)
-        ) 
+        .where(ClientPack.cancelled_at.is_(None))
+        .where(ClientPack.sessions_used < ClientPack.sessions_total_snapshot)
+        .order_by(ClientPack.purchase_at.desc())
+        ).limit(1)
         
         return session.exec(statement).first()
         

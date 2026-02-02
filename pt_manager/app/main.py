@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from app.core.security import require_api_key
 from fastapi import Depends
+from sqlmodel import Session
 
 #importa a função de inicialização do banco de dados(criação de tabelas)
 from app.db.init_db import init_db  
+from app.db.session import engine
+from app.db.seeds.pack_types import seed_pack_types
 from app.api.v1.clients import router as clients_router
 from app.api.v1.packs import router as packs_router
 from app.api.v1.pack_types import router as pack_types_router
@@ -14,6 +17,7 @@ app = FastAPI(
     version= "0.1.0",
 )
 
+
 @app.on_event("startup")
 def on_startup() -> None:
     """
@@ -22,26 +26,13 @@ def on_startup() -> None:
     -Em produção, trocariamos isto por migração (Alembic)
     """
     init_db()
-
-@app.get("/")
-def root() -> dict:
-    """
-    Rota raiz para evitar 404 no browser.
-    """
-    return {"message": "PT Manager API", "docs": "/docs", "health": "/health"}
-
-@app.get("/health", tags=["health"])
-def health_check() -> dict:
-    """
-    Endpoint simples para verificar se a app está de pé
-    """
-    return {"status": "ok"}
-
+    with Session(engine) as session:
+        seed_pack_types(session)
 
 #Protege todas as rotas 
-common_depedencies = [Depends(require_api_key)]
+common_dependencies = [Depends(require_api_key)]
 #versão da API (V1)
-app.include_router(clients_router, prefix="/api/v1", dependencies=[Depends(require_api_key)])
-app.include_router(packs_router, prefix="/api/v1", dependencies=[Depends(require_api_key)])
-app.include_router(pack_types_router, prefix="/api/v1", dependencies=[Depends(require_api_key)])
-app.include_router(sessions_router, prefix="/api/v1", dependencies=[Depends(require_api_key)])
+app.include_router(clients_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(packs_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(pack_types_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(sessions_router, prefix="/api/v1", dependencies=common_dependencies)

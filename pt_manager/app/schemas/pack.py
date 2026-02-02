@@ -1,31 +1,5 @@
 from typing import Optional
-from pydantic import Field
-from sqlmodel import SQLModel
-
-
-# =========================
-# Pack Type
-# =========================
-
-class PackTypeCreate(SQLModel):
-    """
-    Payload para criação de um novo tipo de pacote.
-    """
-
-    name: str = Field(min_length=1, max_length=100)
-    session_total: int = Field(ge=1, le=500)
-
-class PackTypeRead(SQLModel):
-    """
-    Schema para leitura de dados do tipo de pacote.
-    usado em respostas de API
-    """
-
-    id: int
-    name: str
-    session_total: int
-    created_at: str
-    updated_at: str
+from sqlmodel import SQLModel, Field
 
 # =========================
 # Client Pack (purchase)
@@ -38,7 +12,7 @@ class ClientPackPurchase(SQLModel):
      """
 
     pack_type_id: str
-    purchase_date: Optional[str] = None  #data da compra, se não for fornecida, usa a data atual
+    purchase_at: Optional[str] = None  #data da compra, se não for fornecida, usa a data atual
 
 
 class ClientPackRead(SQLModel):

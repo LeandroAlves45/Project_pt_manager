@@ -1,8 +1,9 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import EmailStr, Field
-from sqlmodel import SQLModel
+from pydantic import EmailStr, field_validator, BaseModel
+from sqlmodel import SQLModel, Field
+from sqlalchemy.exc import IntegrityError
 
 class ClientCreate(SQLModel):
     """
@@ -15,7 +16,26 @@ class ClientCreate(SQLModel):
     email: Optional[EmailStr] = None
 
     birth_date: date
-    sex: Optional[str] = Field(defult = None)
+    @field_validator('sex')
+    @classmethod
+    def normalize_sex(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip().lower()
+        mapping = {
+            "male": "male",
+            "m": "male",
+            "masculino": "male",
+            "female": "female",
+            "f": "female",
+            "feminino": "female",
+            "other": "other",
+            "unknown": "unknown",
+        }
+        if v not in mapping:
+            raise ValueError("Sexo deve ser: male, female, other, unknown")
+        return mapping[v]
+    sex: Optional[str] = Field(default = None)
 
     height_cm: Optional[int] = Field(default=None, ge= 80, le= 260)
     objetive: Optional[str] = Field(default=None, max_length=500)
@@ -64,5 +84,15 @@ class ClientRead(SQLModel):
     emergency_contact_phone: Optional[str] = None
     status: str #ativo ou arquivado
     created_at: str
-    updated_at: str
-    
+    updated_at: str    
+
+class ActivePackInfo(BaseModel):
+    client_pack_id: str
+    pack_type_id: str
+    pack_type_name: str
+    sessions_total: int
+    sessions_used: int
+    sessions_remaining: int
+
+class ClientReadWithPack(ClientRead):
+    active_pack: Optional[ActivePackInfo] = None

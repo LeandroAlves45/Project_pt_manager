@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.deps import db_session
 from app.db.models.session import TrainingSession
@@ -13,12 +14,12 @@ def schedule_session_for_client(
     client_id: str,
     payload: TrainingSessionCreate,
     session: Session = Depends(db_session),
-):
+) -> TrainingSession:
     """
     Agenda uma nova sessão de treino para um cliente específico.
     """
     try:
-        new_session = SessionService.schedule_session(
+        return SessionService.schedule_session(
             session = session,
             client_id=client_id,
             starts_at=payload.starts_at,
@@ -26,12 +27,11 @@ def schedule_session_for_client(
             location=payload.location,
             notes=payload.notes,
         )
-        return new_session
+        
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )   
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao agendar sessão.") from e  
 
 @router.get("", response_model=list[TrainingSessionRead])
 def list_sessions(session: Session = Depends(db_session)) -> list[TrainingSession]:
@@ -39,22 +39,20 @@ def list_sessions(session: Session = Depends(db_session)) -> list[TrainingSessio
     Lista todas as sessões de treino.
     """
 
-    stmt = select(TrainingSession).order_by(TrainingSession.starts_at.desc().limit(100))
-    return list(session.exec(stmt).all())
+    try:
+        stmt = select(TrainingSession).order_by(TrainingSession.starts_at.desc()).limit(100)
+        return list(session.exec(stmt).all())
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao listar sessões.") from e
 
 @router.post("/{session_id}/complete", response_model=TrainingSessionRead)
-def complete_session(session_id: str, session: Session = Depends(db_session)):
+def complete_session(session_id: str, session: Session = Depends(db_session)) -> TrainingSession:
     """
     Marca uma sessão como concluída e consome um pack do cliente.
     """
     try:
-        updated_session = SessionService.complete_session_consuming_pack(
-            session=session,
-            session_id=session_id,
-        )
-        return updated_session
+        return SessionService.complete_session_consuming_pack(session=session, session_id=session_id)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao completar sessão.") from e
