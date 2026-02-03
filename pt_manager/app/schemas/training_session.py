@@ -1,13 +1,14 @@
 from typing import Optional
 from pydantic import Field
 from sqlmodel import SQLModel
+from datetime import datetime, date
 
 class TrainingSessionCreate(SQLModel):
     """
     Agendar uma sessão de treino individual.
     """
 
-    starts_at: str = Field(min_length = 10) #ISO UTC datetime string
+    starts_at: date
     duration_minutes: int = Field(ge=15, le=240)
     location: Optional[str] = Field(default=None, max_length=200)
     notes: Optional[str] = Field(default=None)
@@ -15,10 +16,22 @@ class TrainingSessionCreate(SQLModel):
 class TrainingSessionRead(SQLModel):
     id: str
     client_id: str
-    starts_at: str
+    client_name: Optional[str]
+    starts_at: datetime
     duration_minutes: int
     location: Optional[str]
     notes: Optional[str]
     status: str
-    created_at: str
-    updated_at: str
+    created_at: datetime    
+    updated_at: datetime
+
+class TrainingSessionUpdate(SQLModel):
+    """
+    Atualização parcial de uma sessão de treino.
+    """
+
+    starts_at: Optional[date] = None
+    duration_minutes: Optional[int] = Field(default=None, ge=15, le=240)
+    location: Optional[str] = Field(default=None, max_length=200)
+    notes: Optional[str] = None
+    status: Optional[str] = Field(default=None, max_length=20)  # scheduled | completed | canceled | no-show

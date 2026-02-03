@@ -20,6 +20,7 @@ class TrainingSession (SQLModel, table = True):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, index=True)
     client_id: str = Field(index = True, foreign_key="clients.id")
+    client_name: Optional[str] = Field(default=None)
 
     starts_at: str = Field(index =True)
     duration_minutes: int = Field(ge=15, le=240)

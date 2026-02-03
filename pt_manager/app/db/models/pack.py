@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional
 from datetime import datetime
+from app.utils.time import utc_now_dt
 
 from sqlmodel import SQLModel, Field
 
@@ -16,8 +17,8 @@ class PackType(SQLModel, table=True):
     name: str = Field(index=True, min_length=1)
     sessions_total: int = Field(ge=1, le=500)
     is_active: bool = Field(default=True, index=True)
-    created_at: str = Field(default_factory=lambda: _utc_now_dt())
-    updated_at: str = Field(default_factory=lambda: _utc_now_dt())
+    created_at: str = Field(default_factory=lambda: utc_now_dt())
+    updated_at: str = Field(default_factory=lambda: utc_now_dt())
 
 class ClientPack(SQLModel, table=True):
     """
@@ -38,9 +39,10 @@ class ClientPack(SQLModel, table=True):
     __tablename__ = "client_packs"
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     client_id: str = Field(foreign_key="clients.id")
-    pack_type_id: str = Field(foreign_key="pack_types.id")
-    purchase_at: datetime = Field(default_factory=lambda: _utc_now_dt(), index=True)
-    valid_until: Optional[str] = Field(default=None, index=True)
+    pack_type_id: str = Field(foreign_key="pack_types.id")  
+    client_name: Optional[str] = Field(default=None)
+    purchase_at: datetime = Field(default_factory=lambda: utc_now_dt(), index=True)
+    valid_until: Optional[datetime] = Field(default=None, index=True)
 
     sessions_total_snapshot: int = Field(ge=1, le=500)
     sessions_used: int = Field(default=0, ge=0)
@@ -52,12 +54,6 @@ class ClientPack(SQLModel, table=True):
     cancelled_at: Optional[datetime] = Field(default=None, index=True)
     archived_at: Optional[datetime] = Field(default=None, index=True)
 
-    created_at: datetime = Field(default_factory=lambda: _utc_now_dt())
-    updated_at: datetime = Field(default_factory=lambda: _utc_now_dt())
+    created_at: datetime = Field(default_factory=lambda: utc_now_dt())
+    updated_at: datetime = Field(default_factory=lambda: utc_now_dt())
 
-def _utc_now_dt() -> datetime:
-    """
-    Datetime timezone-aware em UTC, sem microsegundos (consistência)
-    """
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).replace(microsecond=0)

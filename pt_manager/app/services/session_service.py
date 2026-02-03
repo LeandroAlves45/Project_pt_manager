@@ -1,11 +1,31 @@
 from __future__ import annotations
 
 from sqlmodel import Session, select
+from sqlalchemy import or_, func
 from sqlalchemy.exc import IntegrityError
+
 
 from app.db.models.session import TrainingSession, PackConsumption
 from app.db.models.pack import ClientPack
 from app.db.models.client import Client
+from datetime import datetime, timezone, time, date
+from zoneinfo import ZoneInfo
+
+LISBON_TZ = ZoneInfo("Europe/Lisbon")
+
+
+def date_to_utc_datetime(d: date, hour: int = 9, minute: int = 0) -> datetime:
+    """
+    Converte uma date (YYYY-MM-DD) para datetime UTC.
+    Assume hora default em Europe/Lisbon.
+    """
+    local_dt = datetime.combine(
+        d,
+        time(hour=hour, minute=minute),
+        tzinfo=LISBON_TZ,
+    )
+
+    return local_dt.astimezone(timezone.utc).replace(microsecond=0)
 
 
 class SessionService:
@@ -14,7 +34,7 @@ class SessionService:
     """
 
     @staticmethod
-    def schedule_session (session: Session, client_id: str, *,starts_at: str, duration_minutes: int,
+    def schedule_session (session: Session, client_id: str, *,starts_at: date , duration_minutes: int,
                           location: str | None = None, notes: str | None = None) -> TrainingSession:
         """
         Agenda uma nova sessão de treino para um cliente.
@@ -27,8 +47,40 @@ class SessionService:
         if client.archived_at is not None:
             raise ValueError("Não é possível agendar sessões para clientes arquivados.")
         
+        now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+        #pack ativo com saldo
+        active_pack = session.exec(
+            select(ClientPack)
+            .where(ClientPack.client_id == client_id)
+            .where(ClientPack.archived_at.is_(None))
+            .where(ClientPack.cancelled_at.is_(None))
+            .where(ClientPack.sessions_used < ClientPack.sessions_total_snapshot)
+            .where(or_(ClientPack.valid_until.is_(None), ClientPack.valid_until > now_iso))
+            .order_by(ClientPack.purchase_at.desc())
+            .limit(1)
+        ).first()
+
+        if not active_pack:
+            raise ValueError("O cliente não tem packs ativos disponíveis. Não é possível agendar a sessão.")
+        
+        #impedir overbooking: verificar se já existe sessão agendada para o cliente na mesma data/hora
+        remaining = active_pack.sessions_total_snapshot - active_pack.sessions_used
+
+        future_scheduled_count = session.exec(
+            select(func.count())
+            .select_from(TrainingSession)
+            .where(TrainingSession.client_id == client_id)
+            .where(TrainingSession.status == "scheduled")
+            .where(TrainingSession.starts_at >= now_iso)
+        ).one()
+
+        if future_scheduled_count >= remaining:
+            raise ValueError("O cliente já tem sessões agendadas suficientes para o pack ativo. Não é possível agendar mais sessões.")
+        
         new_session = TrainingSession(
             client_id=client_id,
+            client_name=getattr(client, "full_name", None),
             starts_at=starts_at,
             duration_minutes=duration_minutes,
             location=location,
@@ -73,8 +125,8 @@ class SessionService:
                 session.add(training_session)
                 return training_session
 
-            if training_session.status in ("canceled", "no-show"):
-                raise ValueError("Não é possível completar uma sessão cancelada ou de não comparecimento.")
+            if training_session.status in ("cancelled", "missed"):
+                raise ValueError("Não é possível completar uma sessão cancelada ou marcada como não comparecimento.")
 
             client_id = training_session.client_id
 
@@ -86,10 +138,10 @@ class SessionService:
                 select(ClientPack)  
                 .where(ClientPack.client_id == client_id)   
                 .where(ClientPack.archived_at.is_(None))
-                .where(ClientPack.canceled_at.is_(None))
-                .where(ClientPack.sessions_used < ClientPack.sessions_total)
-                .where(ClientPack.valid_until.is_(None)) | (ClientPack.valid_until > now_iso)
-                .order_by(ClientPack.purchased_at.desc())
+                .where(ClientPack.cancelled_at.is_(None))
+                .where(ClientPack.sessions_used < ClientPack.sessions_total_snapshot)
+                .where(or_(ClientPack.valid_until.is_(None), ClientPack.valid_until > now_iso))
+                .order_by(ClientPack.purchase_at.desc())
                 .limit(1)
             ).first()
 

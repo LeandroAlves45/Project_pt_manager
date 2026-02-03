@@ -63,12 +63,13 @@ def update_pack_type(pack_type_id: str,
         #se mudar de nome, validar
         if payload.name is not None and payload.name != pack_type.name:
             existing = session.exec(
-                select(Packtype).where(PackType.name == payload.name)
+                select(PackType).where(PackType.name == payload.name)
             ).first()
         
         if existing:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Já existe Pack Type com este nome: '{payload.name}'",)
-            pack_type.name = payload.name
+        
+        pack_type.name = payload.name
 
         #atualizar sessions_total se mandado
         if payload.sessions_total is not None:
@@ -78,7 +79,7 @@ def update_pack_type(pack_type_id: str,
         if payload.is_active is not None:
             pack_type.is_active = payload.is_active
 
-        sessions.add(pack_type)
+        session.add(pack_type)
         commit_or_rollback(session)
         session.refresh(pack_type)
         return pack_type

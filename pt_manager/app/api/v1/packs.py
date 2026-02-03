@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from datetime import datetime, timezone
 
+from app.utils.time import utc_now_dt
 from app.api.deps import db_session
 from app.db.models.client import Client
 from app.db.models.pack import PackType, ClientPack
@@ -47,20 +48,20 @@ def purchase_pack_for_client(
         new_pack = ClientPack(
             client_id=client_id,
             pack_type_id=payload.pack_type_id,
+            client_name=client.full_name,
             purchase_at= utc_now_dt(),
             sessions_total_snapshot=pack_type.sessions_total,
             sessions_used=0,
         )
 
         session.add(new_pack)
-        commit_or_rollback(session)
-        session.refresh(new_pack)
-        return new_pack
-        
-    except HTTPException:
-        raise
+        session.commit()
+    except IntegrityError as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f"IntegrityError: {getattr(e, 'orig', e)}") from e
     except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Erro ao comprar pack.") from e
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"SQLAlchemyError: {getattr(e, 'orig', e)}") from e
     
 @router.get("/clients/{client_id}", response_model=list[ClientPackRead])
 def list_client_packs(client_id: str, session: Session = Depends(db_session)) -> list[ClientPack]:
@@ -71,7 +72,7 @@ def list_client_packs(client_id: str, session: Session = Depends(db_session)) ->
         stmt = (
             select(ClientPack)
             .where(ClientPack.client_id == client_id)
-            .order_by(ClientPack.purchased_at.desc())
+            .order_by(ClientPack.purchase_at.desc())
         )
         return list(session.exec(stmt).all())
     except SQLAlchemyError as e:
