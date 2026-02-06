@@ -2,14 +2,17 @@ from __future__ import annotations
 
 from sqlmodel import Session, select
 from sqlalchemy import or_, func
-from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+import logging
 
 from app.db.models.session import TrainingSession, PackConsumption
 from app.db.models.pack import ClientPack
 from app.db.models.client import Client
 from datetime import date
+from app.services.notification_service import NotificationService
 from app.utils.time import utc_now
+
+logger = logging.getLogger(__name__)
 
 class SessionService:
     """
@@ -70,14 +73,26 @@ class SessionService:
             notes=notes,
             status="scheduled",
         )
-        session.add(new_session)
+        
         try:
+            
+            session.add(new_session)
+            session.flush()
+            #cria notificações de lembrete para a sessão
+            NotificationService.create_reminder_for_session(session, new_session)
             session.commit()
-            session.refresh(new_session)
+
         except IntegrityError as e:
             session.rollback()
             raise ValueError("Erro ao agendar a sessão de treino.") from e
-
+        
+        except SQLAlchemyError as e:
+            session.rollback()
+            # Log técnico completo (stacktrace)
+            logger.exception("Erro DB ao agendar sessão")
+            raise ValueError("Erro ao agendar a sessão de treino.") from e
+        
+        session.refresh(new_session)
         return new_session
     
     @staticmethod

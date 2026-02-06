@@ -11,6 +11,8 @@ from app.api.v1.clients import router as clients_router
 from app.api.v1.packs import router as packs_router
 from app.api.v1.pack_types import router as pack_types_router
 from app.api.v1.sessions import router as sessions_router
+from app.api.v1.training_plans import router as training_plans_router
+from app.api.v1.exercises import router as exercises_router
 
 app = FastAPI(
     title="PT Manager API",
@@ -29,6 +31,8 @@ def on_startup() -> None:
     with Session(engine) as session:
         seed_pack_types(session)
 
+
+
 #Protege todas as rotas 
 common_dependencies = [Depends(require_api_key)]
 #versão da API (V1)
@@ -36,3 +40,5 @@ app.include_router(clients_router, prefix="/api/v1", dependencies=common_depende
 app.include_router(packs_router, prefix="/api/v1", dependencies=common_dependencies)
 app.include_router(pack_types_router, prefix="/api/v1", dependencies=common_dependencies)
 app.include_router(sessions_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(training_plans_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(exercises_router, prefix="/api/v1", dependencies=common_dependencies)

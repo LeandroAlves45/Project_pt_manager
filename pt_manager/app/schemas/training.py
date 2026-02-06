@@ -70,7 +70,6 @@ class TrainingPlanRead(SQLModel):
 
 class TrainingPlanDayCreate(SQLModel):
     #payload para criar dia do plano de treino
-    plan_id: str
     name: str = Field(min_length=1)
     order_index: int = Field(default=0, ge=0)
     notes: Optional[str] = None
@@ -180,3 +179,11 @@ class ClientActivePlanRead(SQLModel):
     active_to: Optional[date] = None
     created_at: date
     updated_at: date
+
+#Class clone para clone de plano de treino
+class ClonePlanToClientCreate(SQLModel):
+    #payload para clonar plano de treino
+    client_id: str = Field(min_length=1)
+    name: Optional[str] = Field(default=None, min_length=1)
+    activate: bool = False
+    activate_from: Optional[date] = None

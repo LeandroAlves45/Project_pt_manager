@@ -44,3 +44,5 @@ class PackConsumption(SQLModel, table=True):
     client_pack_id: str = Field(index=True, foreign_key="client_packs.id")
 
     created_at: date = Field(default_factory=utc_now)
+
+

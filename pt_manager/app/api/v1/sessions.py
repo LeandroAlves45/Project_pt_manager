@@ -57,7 +57,10 @@ def schedule_session_for_client(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Erro ao agendar sessão.") from e  
+        # Log técnico completo (stacktrace)
+        logger.exception("Erro ao agendar sessão no banco de dados")
+
+        raise HTTPException(status_code=500, detail=str(e)) from e  
 
 @router.put("/{session_id}", response_model=TrainingSessionRead)
 def update_session(

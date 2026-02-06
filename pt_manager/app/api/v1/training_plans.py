@@ -8,8 +8,8 @@ from app.core.db_errors import commit_or_rollback
 from app.db.models.client import Client
 from app.db.models.training import (TrainingPlan, TrainingPlanDay, PlanDayExercise, PlanExerciseSetLoad, ClientActivePlan, Exercise,)
 from app.schemas.training import (TrainingPlanCreate, TrainingPlanRead, TrainingPlanUpdate, TrainingPlanDayCreate, TrainingPlanDayRead, TrainingPlanDayUpdate,
-    PlanDayExerciseCreate, PlanDayExerciseRead, PlanDayExerciseUpdate, PlanExerciseSetLoadCreate, PlanExerciseSetLoadRead, PlanExerciseSetLoadUpdate, ClientActivePlanSet,
-    ClientActivePlanRead,)
+    PlanDayExerciseCreate, PlanDayExerciseRead, PlanDayExerciseUpdate, PlanExerciseSetLoadCreate, PlanExerciseSetLoadRead, PlanExerciseSetLoadUpdate, ClientActivePlanCreate,
+    ClientActivePlanRead, ClonePlanToClientCreate)
 from app.utils.time import utc_now
 
 router = APIRouter(prefix="/training_plans", tags=["Training Plans"])
@@ -51,7 +51,7 @@ def _day_exercise_to_read(de: PlanDayExercise) -> PlanDayExerciseRead:
         reps_range=de.reps_range,
         rest_range_seconds=de.rest_range_seconds,
         tempo=de.tempo,
-        is_superset_group=de.is_superset_group,
+        is_superset=de.is_superset,
         substitution_allowed=de.substitution_allowed,
         created_at=de.created_at,
         updated_at=de.updated_at
@@ -72,7 +72,7 @@ def _active_to_read(a: ClientActivePlan) -> ClientActivePlanRead:
     return ClientActivePlanRead(
         id=a.id,
         client_id=a.client_id,
-        plan_id=a.plan_id,
+        training_plan_id=a.training_plan_id,
         active_from=a.active_from,
         active_to=a.active_to,
         created_at=a.created_at,
@@ -220,7 +220,7 @@ def delete_plan(
         
         #Delete em cascade nao existe automaticamente em sqlmodel/sqlite
         #Delete manual para nao deixar registos orfãos
-        days = session.exec(select(PlanDayExercise).where(PlanDayExercise.plan_day_id == plan.id)).all()
+        days = session.exec(select(TrainingPlanDay).where(TrainingPlanDay.plan_id == plan.id)).all()
         for day in days:
             day_ex = session.exec(select(PlanDayExercise).where(PlanDayExercise.plan_day_id == day.id)).all()
             for x in day_ex:
@@ -231,7 +231,7 @@ def delete_plan(
             session.delete(day)
         
         #remove mapeamentos de plano de treino (histórico)
-        actives = session.exec(select(ClientActivePlan).where(ClientActivePlan.plan_id == plan.id)).all()
+        actives = session.exec(select(ClientActivePlan).where(ClientActivePlan.training_plan_id == plan.id)).all()
         for active in actives:
             session.delete(active)
 
@@ -269,16 +269,16 @@ def list_plan_days(plan_id: str, session: Session = Depends(db_session),) -> Lis
     
 #criar novo dia no plano de treino
 @router.post("/{plan_id}/days", response_model=TrainingPlanDayRead, status_code=status.HTTP_201_CREATED)
-def create_plan_day(payload: TrainingPlanDayCreate, session: Session = Depends(db_session),) -> TrainingPlanDayRead:
+def create_plan_day(plan_id: str, payload: TrainingPlanDayCreate, session: Session = Depends(db_session),) -> TrainingPlanDayRead:
 
     #cria novo dia no plano de treino
     try:
-        plan = session.get(TrainingPlan, payload.plan_id)
+        plan = session.get(TrainingPlan, plan_id)
         if not plan:
             raise HTTPException(status_code=404, detail="Plano de treino nao encontrado.")
 
         new_day = TrainingPlanDay(
-            plan_id=payload.plan_id,
+            plan_id=plan_id,
             name=payload.name.strip(),
             order_index=payload.order_index,
             notes=payload.notes,
@@ -361,7 +361,7 @@ def list_day_exercises(day_id: str, session: Session = Depends(db_session),) -> 
         exercises = session.exec(
             select(PlanDayExercise)
             .where(PlanDayExercise.plan_day_id == day_id)
-            .order_by(PlanDayExercise.created_at.asc())
+            .order_by(PlanDayExercise.order_index.asc(), PlanDayExercise.created_at.asc())
         ).all()
 
         return [_day_exercise_to_read(e) for e in exercises]
@@ -466,3 +466,386 @@ def delete_day_exercise(day_exercise_id: str, session: Session = Depends(db_sess
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Erro ao deletar o exercicio do dia do plano de treino.") from e
+
+#===================
+#CRUD: Cargas por série
+#===================
+
+#get das cargas por série do exercicio do dia do plano de treino
+@router.get("/days/exercises/{day_exercise_id}/loads", response_model=List[PlanExerciseSetLoadRead])
+def list_set_loads(day_exercise_id: str, session: Session = Depends(db_session),) -> List[PlanExerciseSetLoadRead]:
+
+    #lista as cargas por série de um exercicio do dia do plano de treino
+    try:
+        day_exercise = session.get(PlanDayExercise, day_exercise_id)
+        if not day_exercise:
+            raise HTTPException(status_code=404, detail="Exercicio do dia do plano de treino nao encontrado.")
+
+        loads = session.exec(
+            select(PlanExerciseSetLoad)
+            .where(PlanExerciseSetLoad.plan_day_exercise_id == day_exercise_id)
+            .order_by(PlanExerciseSetLoad.set_number.asc())
+        ).all()
+
+        return [_set_load_to_read(l) for l in loads]
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao listar as cargas por série do exercicio do dia do plano de treino.") from e
+
+#criar nova carga por série do exercicio do dia do plano de treino
+@router.post("/days/exercises/{day_exercise_id}/loads", response_model=PlanExerciseSetLoadRead, status_code=status.HTTP_201_CREATED)
+def create_set_load(payload: PlanExerciseSetLoadCreate, session: Session = Depends(db_session),) -> PlanExerciseSetLoadRead:
+    
+    #cria nova carga por série do exercicio do dia do plano de treino
+    try:
+        day_exercise = session.get(PlanDayExercise, payload.plan_day_exercise_id)
+        if not day_exercise:
+            raise HTTPException(status_code=404, detail="Exercicio do dia do plano de treino nao encontrado.")
+
+        if payload.set_number > day_exercise.sets:
+            raise HTTPException(status_code=400, detail="O número da série não pode ser maior que o número total de séries definido para este exercício do dia do plano de treino.")
+        
+        new_load = PlanExerciseSetLoad(
+            plan_day_exercise_id=payload.plan_day_exercise_id,
+            set_number=payload.set_number,
+            load_kg=payload.load_kg,
+            notes=payload.notes,
+        )
+
+        session.add(new_load)
+        commit_or_rollback(session)
+        session.refresh(new_load)
+        return _set_load_to_read(new_load)
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao criar nova carga por série do exercicio do dia do plano de treino.") from e
+    
+#atualizar carga por série do exercicio do dia do plano de treino
+@router.put("/days/exercises/loads/{set_load_id}", response_model=PlanExerciseSetLoadRead)
+def update_set_load(set_load_id: str, payload: PlanExerciseSetLoadUpdate, session: Session = Depends(db_session)) -> PlanExerciseSetLoadRead:
+
+    #atualiza carga por série do exercicio do dia do plano de treino existente
+    try:
+        set_load = session.get(PlanExerciseSetLoad, set_load_id)
+        if not set_load:
+            raise HTTPException(status_code=404, detail="Carga por série do exercicio do dia do plano de treino nao encontrada.")
+
+        if payload.set_number is not None:
+            day_exercise = session.get(PlanDayExercise, set_load.plan_day_exercise_id)
+            if payload.set_number > day_exercise.sets:
+                raise HTTPException(status_code=400, detail="O número da série não pode ser maior que o número total de séries definido para este exercício do dia do plano de treino.")
+            
+            set_load.set_number = payload.set_number
+        
+        if payload.load_kg is not None:
+            set_load.load_kg = payload.load_kg
+        
+        if payload.notes is not None:
+            set_load.notes = payload.notes
+        
+        set_load.updated_at = utc_now()
+        
+        session.add(set_load)
+        commit_or_rollback(session)
+        session.refresh(set_load)
+        return _set_load_to_read(set_load)
+    
+    except IntegrityError as e:
+        raise HTTPException(status_code=409, detail="Conflito: set_number duplicado para este exercício.") from e
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao atualizar a carga por série do exercicio do dia do plano de treino.") from e
+    
+#delete da carga por série do exercicio do dia do plano de treino
+@router.delete("/set-loads/{set_load_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_set_load(set_load_id: str, session: Session = Depends(db_session)) -> None:
+
+    #delete da carga por série do exercicio do dia do plano de treino
+    try:
+        set_load = session.get(PlanExerciseSetLoad, set_load_id)
+        if not set_load:
+            raise HTTPException(status_code=404, detail="Carga por série do exercicio do dia do plano de treino nao encontrada.")
+
+        session.delete(set_load)
+        commit_or_rollback(session)
+        return None
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao deletar a carga por série do exercicio do dia do plano de treino.") from e
+
+#===================
+#Plano ativo do cliente
+#===================
+
+"""Obtém o plano ativo do cliente (se existir)."""
+@router.get("/active-plan/{client_id}", response_model=Optional[ClientActivePlanRead])
+def get_active_plan(client_id: str, session: Session = Depends(db_session),) -> Optional[ClientActivePlanRead]:
+
+    try:
+        client = session.get(Client, client_id)
+        if not client:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado.")
+        if client.archived_at is not None:
+            raise HTTPException(status_code=400, detail="Cliente está arquivado.")
+
+        active_plan = session.exec(
+            select(ClientActivePlan)
+            .where(ClientActivePlan.client_id == client_id)
+            .where(ClientActivePlan.active_to == None)
+        ).first()
+
+        if not active_plan:
+            return None
+
+        return _active_to_read(active_plan) if active_plan  else None
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao obter o plano ativo do cliente.") from e
+
+    """
+    Define um plano como ativo para um cliente.
+
+    Regras:
+    - Cliente tem de existir e não estar arquivado
+    - Plano tem de existir e estar associado ao cliente OU ser template (client_id NULL)
+      (se for template, aqui apenas define ativo; clonar é outro endpoint futuro)
+    - Fecha qualquer ativo anterior (active_to = hoje)
+    """
+@router.post("/active-plan", response_model=ClientActivePlanRead, status_code=status.HTTP_201_CREATED)
+def set_active_plan(payload: ClientActivePlanCreate, session: Session = Depends(db_session)) -> ClientActivePlanRead:
+
+    try:
+        client = session.get(Client, payload.client_id)
+        if not client:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado.")
+        if client.archived_at is not None:
+            raise HTTPException(status_code=400, detail="Cliente está arquivado.")
+
+        plan = session.get(TrainingPlan, payload.training_plan_id)
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plano de treino não encontrado.")
+
+        if plan.client_id is not None and plan.client_id != payload.client_id:
+            raise HTTPException(status_code=400, detail="Plano de treino não está associado ao cliente.")
+
+        today = payload.active_from or utc_now()
+
+        # Fecha qualquer plano ativo anterior
+        active_plan = session.exec(
+            select(ClientActivePlan)
+            .where(ClientActivePlan.client_id == payload.client_id)
+            .where(ClientActivePlan.active_to == None)
+        ).first()
+
+        if active_plan:
+            #idempotência: se já é o mesmo plano, não faz nada
+            if active_plan.training_plan_id == payload.training_plan_id:
+                return _active_to_read(active_plan)
+
+            active_plan.active_to = today
+            active_plan.updated_at = utc_now()
+            session.add(active_plan)
+            commit_or_rollback(session)
+
+        # Define o novo plano ativo
+        new_active_plan = ClientActivePlan(
+            client_id=payload.client_id,
+            training_plan_id=payload.training_plan_id,
+            active_from=today,
+            active_to=None
+        )
+
+        session.add(new_active_plan)
+        commit_or_rollback(session)
+        session.refresh(new_active_plan)
+        return _active_to_read(new_active_plan)
+    except IntegrityError as e:
+        # Quando o índice parcial UNIQUE existir, isto cobre corrida/conflito.
+        raise HTTPException(status_code=409, detail="Já existe um plano ativo para este cliente.") from e
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao definir o plano ativo do cliente.") from e
+
+#Encerra o plano ativo do cliente (active_to = hoje).
+@router.post("/clients/{client_id}/active/close", response_model=Optional[ClientActivePlanRead])
+def close_active_plan(client_id: str, session: Session = Depends(db_session)) -> Optional[ClientActivePlanRead]:
+
+    try:
+        client = session.get(Client, client_id)
+        if not client:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado.")
+        if client.archived_at is not None:
+            raise HTTPException(status_code=400, detail="Cliente está arquivado.")
+
+        active_plan = session.exec(
+            select(ClientActivePlan)
+            .where(ClientActivePlan.client_id == client_id)
+            .where(ClientActivePlan.active_to.is_(None))
+            .limit(1)
+        ).first()
+
+        if not active_plan:
+            return None
+
+        active_plan.active_to = utc_now()
+        active_plan.updated_at = utc_now()
+        session.add(active_plan)
+        commit_or_rollback(session)
+        session.refresh(active_plan)
+        return _active_to_read(active_plan)
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao encerrar o plano ativo do cliente.") from e
+    
+    #===================
+    #Clona plano de treino para cliente
+    #===================
+
+@router.post("/{template_plan_id}/clone-to-client/{client_id}", response_model=TrainingPlanRead, status_code=status.HTTP_201_CREATED)
+def clone_template_to_client(template_plan_id: str, payload: ClonePlanToClientCreate, session: Session = Depends(db_session)) -> TrainingPlanRead:
+    
+    # =========================
+    # 1) Validar cliente
+    # =========================
+    client = session.get(Client, payload.client_id)
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado.")
+    if client.archived_at is not None:
+        raise HTTPException(status_code=400, detail="Cliente está arquivado.")
+
+    # =========================
+    # 2) Validar template
+    # =========================
+    template = session.get(TrainingPlan, template_plan_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template não encontrado.")
+    if template.client_id is not None:
+        raise HTTPException(status_code=400, detail="O plano indicado não é template (tem client_id).")
+
+    # =========================
+    # 3) Criar novo plano do cliente
+    # =========================
+    new_plan = TrainingPlan(
+        client_id=payload.client_id,
+        name=(payload.name.strip() if payload.name else f"{template.name} - {client.name}"),
+        status=("active" if payload.activate else "draft"),
+        start_date=template.start_date,
+        end_date=template.end_date,
+        notes=template.notes,
+    )
+    session.add(new_plan)
+
+    try:
+        # flush: garante new_plan.id antes do commit
+        session.flush()
+
+        # =========================
+        # 4) Copiar dias
+        # =========================
+        template_days = session.exec(
+            select(TrainingPlanDay)
+            .where(TrainingPlanDay.plan_id == template_plan_id)
+            .order_by(TrainingPlanDay.order_index.asc(), TrainingPlanDay.created_at.asc())
+        ).all()
+
+        # Mapa: old_day_id -> new_day_id
+        day_map: dict[str, str] = {}
+
+        for d in template_days:
+            nd = TrainingPlanDay(
+                plan_id=new_plan.id,
+                name=d.name,
+                order_index=d.order_index,
+                notes=d.notes,
+            )
+            session.add(nd)
+            session.flush()
+            day_map[d.id] = nd.id
+
+        # =========================
+        # 5) Copiar exercícios dos dias
+        # =========================
+        # Mapa: old_day_ex_id -> new_day_ex_id
+        day_ex_map: dict[str, str] = {}
+
+        for old_day_id, new_day_id in day_map.items():
+            old_exercises = session.exec(
+                select(PlanDayExercise)
+                .where(PlanDayExercise.plan_day_id == old_day_id)
+                .order_by(PlanDayExercise.order_index.asc(), PlanDayExercise.created_at.asc())
+            ).all()
+
+            for x in old_exercises:
+                nx = PlanDayExercise(
+                    plan_day_id=new_day_id,
+                    exercise_id=x.exercise_id,
+                    order_index=x.order_index,
+                    sets=x.sets,
+                    reps_range=x.reps_range,
+                    rest_range_seconds=x.rest_range_seconds,
+                    tempo=x.tempo,
+                    is_superset_group=x.is_superset_group,
+                    substitution_allowed=x.substitution_allowed,
+                    notes=x.notes,
+                )
+                session.add(nx)
+                session.flush()
+                day_ex_map[x.id] = nx.id
+
+        # =========================
+        # 6) Copiar loads por série
+        # =========================
+        for old_day_ex_id, new_day_ex_id in day_ex_map.items():
+            old_loads = session.exec(
+                select(PlanExerciseSetLoad)
+                .where(PlanExerciseSetLoad.plan_day_exercise_id == old_day_ex_id)
+                .order_by(PlanExerciseSetLoad.set_number.asc())
+            ).all()
+
+            for l in old_loads:
+                nl = PlanExerciseSetLoad(
+                    plan_day_exercise_id=new_day_ex_id,
+                    set_number=l.set_number,
+                    load_kg=l.load_kg,
+                    notes=l.notes,
+                )
+                session.add(nl)
+
+        # =========================
+        # 7) Opcional: ativar plano
+        # =========================
+        if payload.activate:
+            today = payload.active_from or utc_now()
+
+            current = session.exec(
+                select(ClientActivePlan)
+                .where(ClientActivePlan.client_id == payload.client_id)
+                .where(ClientActivePlan.active_to.is_(None))
+                .limit(1)
+            ).first()
+
+            if current:
+                # fecha o anterior
+                current.active_to = today
+                current.updated_at = utc_now()
+                session.add(current)
+
+            new_active = ClientActivePlan(
+                client_id=payload.client_id,
+                plan_id=new_plan.id,
+                active_from=today,
+                active_to=None,
+            )
+            session.add(new_active)
+
+        # commit final (tudo ou nada)
+        session.commit()
+        session.refresh(new_plan)
+        return _plan_to_read(new_plan)
+
+    except IntegrityError as e:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Conflito de integridade ao clonar o plano.") from e
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Erro ao clonar o plano.") from e

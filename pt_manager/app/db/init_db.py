@@ -6,12 +6,14 @@ from app.db.migrate import run_migrations
 from app.db.models.client import Client #noqa: F401
 from app.db.models.pack import PackType, ClientPack #noqa: F401
 from app.db.models.session import TrainingSession, PackConsumption #noqa: F401
+from app.db.models.training import (Exercise, TrainingPlan, TrainingPlanDay, PlanDayExercise, PlanExerciseSetLoad, ClientActivePlan) #noqa: F401
+from app.db.models.notification import Notification #noqa: F401
 
 def init_db() -> None:
     """
     Cria as tabelas na BD caso não existam
     Em produto, isto é substituido por migrações
     """
-    SQLModel.metadata.create_all(engine)
+    SQLModel.metadata.create_all(engine)    
     #executa migrações manuais simples
     run_migrations()
