@@ -8,7 +8,7 @@ import logging
 from app.db.models.session import TrainingSession, PackConsumption
 from app.db.models.pack import ClientPack
 from app.db.models.client import Client
-from datetime import date
+from datetime import datetime
 from app.services.notification_service import NotificationService
 from app.utils.time import utc_now
 
@@ -20,7 +20,7 @@ class SessionService:
     """
 
     @staticmethod
-    def schedule_session (session: Session, client_id: str, *,starts_at: date , duration_minutes: int,
+    def schedule_session (session: Session, client_id: str, *,starts_at: datetime , duration_minutes: int,
                           location: str | None = None, notes: str | None = None) -> TrainingSession:
         """
         Agenda uma nova sessão de treino para um cliente.

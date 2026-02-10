@@ -2,10 +2,19 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlmodel import SQLModel
+import sqlmodel.sql.sqltypes
+
 
 from alembic import context
+
 from app.core.config import settings
-from app.db.base import SQLModel
+from app.db.models.client import Client
+from app.db.models.pack import ClientPack, PackType
+from app.db.models.session import TrainingSession, PackConsumption
+from app.db.models.notification import Notification
+from app.db.models.training import TrainingPlan, Exercise, TrainingPlanDay, PlanDayExercise, PlanExerciseSetLoad,ClientActivePlan
+
 
 # Configuração do Alembic
 config = context.config

@@ -6,7 +6,7 @@ from app.api.deps import db_session
 from app.core.db_errors import commit_or_rollback
 from app.db.models.session import TrainingSession
 from app.schemas.training_session import TrainingSessionCreate, TrainingSessionRead, TrainingSessionUpdate
-from app.services.session_service import SessionService
+from app.services.sessions import SessionService
 import logging
 
 logger = logging.getLogger(__name__)

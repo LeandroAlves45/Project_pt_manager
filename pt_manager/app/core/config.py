@@ -36,4 +36,8 @@ class Settings(BaseSettings):
     wa_token: str | None = None #Token de acesso para WhatsApp Cloud API
     wa_phone_number_id: str | None = None #ID do número de telefone registrado na WhatsApp Cloud API
 
+    # Dentro da classe Settings:
+    notification_test_mode: bool = False
+    notification_test_minutes: int = 2
+
 settings = Settings()

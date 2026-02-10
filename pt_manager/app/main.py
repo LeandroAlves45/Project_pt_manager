@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from app.core.security import require_api_key
-from fastapi import Depends
+from app.api.deps import db_session
 from sqlmodel import Session
 
 #importa a função de inicialização do banco de dados(criação de tabelas)
@@ -14,13 +14,21 @@ from app.api.v1.sessions import router as sessions_router
 from app.api.v1.training_plans import router as training_plans_router
 from app.api.v1.exercises import router as exercises_router
 from app.scheduler import start_scheduler, shutdown_scheduler
+from app.core.logging import setup_logging
+import os
+from app.api.v1.health import router as health_router
+
+os.makedirs("logs", exist_ok=True)  # garante que a pasta de logs exista
+setup_logging()
 
 app = FastAPI(
     title="PT Manager API",
     version= "0.1.0",
 )
 
-
+# Sem autenticação para health check
+app.include_router(health_router, prefix="/api/v1")
+    
 @app.on_event("startup")
 def on_startup() -> None:
     """
