@@ -13,6 +13,7 @@ from app.api.v1.pack_types import router as pack_types_router
 from app.api.v1.sessions import router as sessions_router
 from app.api.v1.training_plans import router as training_plans_router
 from app.api.v1.exercises import router as exercises_router
+from app.api.v1.notifications import router as notifications_router
 from app.scheduler import start_scheduler, shutdown_scheduler
 from app.core.logging import setup_logging
 import os
@@ -56,3 +57,4 @@ app.include_router(pack_types_router, prefix="/api/v1", dependencies=common_depe
 app.include_router(sessions_router, prefix="/api/v1", dependencies=common_dependencies)
 app.include_router(training_plans_router, prefix="/api/v1", dependencies=common_dependencies)
 app.include_router(exercises_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(notifications_router, prefix="/api/v1", dependencies=common_dependencies)

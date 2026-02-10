@@ -5,6 +5,8 @@ from sqlalchemy import or_, func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import logging
 
+from app.db.models import session
+from app.db.models import session
 from app.db.models.session import TrainingSession, PackConsumption
 from app.db.models.pack import ClientPack
 from app.db.models.client import Client
@@ -177,3 +179,227 @@ class SessionService:
             #fora do begin() faz commit
             session.refresh(training_session)
             return training_session
+        
+    #parte responsável pelo update da sessão
+    @staticmethod
+    def update_session(session: Session, session_id: str, *, starts_at: datetime | None = None,
+                       duration_minutes: int | None = None, location: str | None = None,
+                       notes: str | None = None, status: str | None = None) -> TrainingSession:
+        """
+        Atualiza os detalhes de uma sessão de treino.
+        Se o horário (starts_at) for alterado:
+        - Cancela notificações antigas
+        - Cria novas notificações com horário atualizado
+    
+        Args:
+            session: Sessão do banco de dados
+            session_id: ID da sessão a atualizar
+            starts_at: Nova data/hora (opcional)
+            duration_minutes: Nova duração (opcional)
+            location: Novo local (opcional)
+            notes: Novas notas (opcional)
+            status: Novo status (opcional - validado no controller)
+        
+       Returns:
+            TrainingSession: Sessão atualizada
+            
+        Raises:
+            ValueError: Se sessão não for encontrada
+            SQLAlchemyError: Se houver erro no banco de dados ao atualizar a sessão
+        """
+
+        ts = session.get(TrainingSession, session_id)
+        if not ts:
+            raise ValueError(f"Sessão com ID '{session_id}' não encontrada.")
+        
+         # Se starts_at for alterado, precisamos atualizar as notificações
+        horario_alterado = False
+        old_starts_at = None
+
+        if starts_at is not None and starts_at != ts.starts_at:
+            horario_alterado = True
+            old_starts_at = ts.starts_at
+            logger.info(
+            f"[SESSION UPDATE] Horário da sessão {session_id[:8]} será alterado: "
+            f"{old_starts_at} → {starts_at}"
+        )
+            
+            #cancelar notificações antigas
+            if horario_alterado:
+                cancelled_count = NotificationService.cancel_pending_reminders_for_session(session, session_id)
+                logger.info(f"[SESSION UPDATE] {cancelled_count} notificações pendentes canceladas para sessão {session_id[:8]}")
+            
+            #atualizar campos da sessão
+        if starts_at is not None:
+            ts.starts_at = starts_at
+        
+        if duration_minutes is not None:
+            ts.duration_minutes = duration_minutes
+        
+        if location is not None:
+            ts.location = location
+
+        if notes is not None:
+            ts.notes = notes
+        
+        if status is not None:
+            ts.status = status
+
+        try:
+            session.add(ts)
+            session.flush()
+
+            #criar novas notificações se o horário foi alterado
+            if horario_alterado:
+                new_notifications = NotificationService.create_reminder_for_session(session, ts)
+                logger.info(f"[SESSION UPDATE] Novas notificações criadas para sessão {session_id[:8]} com horário atualizado {starts_at}.")
+            
+            session.commit()
+        
+        except IntegrityError as e:
+            session.rollback()
+            raise ValueError("Erro ao atualizar a sessão de treino.") from e
+        
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.exception("Erro DB ao atualizar sessão")
+            raise ValueError("Erro ao atualizar a sessão de treino.") from e
+        
+        session.refresh(ts)
+        return ts
+    
+    #método para marcar sessão como missed
+    @staticmethod
+    def mark_session_missed(session: Session, session_id: str) -> TrainingSession:
+        """
+        Marca uma sessão como 'missed' (cliente faltou).
+        
+        Ações executadas:
+        - Marca sessão como 'missed'
+        - Cancela notificações pendentes (já não são necessárias)
+        - Atualiza timestamp de modificação
+        - Mantém histórico (não apaga)
+        
+        Regras de negócio:
+        - Não pode marcar como missed uma sessão já completada
+        - Não pode marcar como missed uma sessão já cancelada
+        - Não consome pack (cliente faltou)
+        
+        Args:
+            session: Sessão do banco de dados
+            session_id: ID da sessão
+            
+        Returns:
+            TrainingSession: Sessão atualizada
+            
+        Raises:
+            ValueError: Se sessão não for encontrada ou validação falhar
+            SQLAlchemyError: Se houver erro no banco de dados
+        """
+
+        #busca sessão
+        ts = session.get(TrainingSession, session_id)
+        if not ts:
+            raise ValueError(f"Sessão com ID '{session_id}' não encontrada.")
+        
+        #validações  de regras de negócio
+        if ts.status == "completed":
+            raise ValueError("Não é possível marcar como falta uma sessão já concluída.")
+
+        if ts.status == "cancelled":
+            raise ValueError("Não é possível marcar como falta uma sessão já cancelada.")
+        
+        #se ja esta como "missed", garante idempotência
+        if ts.status == "missed":
+            logger.info(f"[SESSION MISSED] Sessão {session_id[:8]} já está marcada como falta")
+            return ts
+        
+        logger.info(
+        f"[SESSION MISSED] Marcando sessão {session_id[:8]} como falta. "
+        f"Status anterior: {ts.status}"
+    )
+        #Cancelar notificações pendentes (se existirem)
+        cancelled_count = NotificationService.cancel_pending_reminders_for_session(session, session_id)
+
+        if cancelled_count > 0:
+            logger.info(f"[SESSION MISSED] {cancelled_count} notificação(s) cancelada(s)"
+                        f"(cliente faltou, não precisa mais lembrar) para sessão {session_id[:8]}")
+            
+        #atualizar status e timestamp
+        ts.status = "missed"
+        ts.updated_at = utc_now()
+
+        try:
+            session.add(ts)
+            session.commit()
+        
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.exception("Erro DB ao marcar sessão como missed")
+            raise ValueError("Erro ao marcar a sessão como 'missed'.") from e
+        
+        session.refresh(ts)
+        logger.info(f"[SESSION MISSED] Sessão {session_id[:8]} marcada como falta com sucesso.")
+        return ts
+    
+    #método para marcar sessão como cancelled
+    @staticmethod
+    def cancel_session(session: Session, session_id: str) -> TrainingSession:
+        """
+        Marca uma sessão como 'cancelled' (cancelada).
+        
+        Ações executadas:
+        - Marca sessão como 'cancelled'
+        - Cancela notificações pendentes (já não são necessárias)
+        - Atualiza timestamp de modificação
+        - Mantém histórico (não apaga)
+        
+        Regras de negócio:
+        - Não pode marcar como cancelled uma sessão já completada
+        - Não pode marcar como cancelled uma sessão já marcada como falta
+        - Não consome pack (sessão cancelada não é consumida)
+        """
+
+        #busca sessão
+        ts = session.get(TrainingSession, session_id)
+        if not ts:
+            raise ValueError(f"Sessão com ID '{session_id}' não encontrada.")
+        
+        #validações  de regras de negócio
+        if ts.status == "completed":
+            raise ValueError("Não é possível cancelar uma sessão já concluída.")
+
+        if ts.status == "missed":
+            raise ValueError("Não é possível cancelar uma sessão marcada como falta.")
+        
+        #se ja esta como "cancelled", garante idempotência
+        if ts.status == "cancelled":
+            logger.info(f"[SESSION CANCELLED] Sessão {session_id[:8]} já está marcada como cancelada")
+            return ts
+        
+        logger.info(
+        f"[SESSION CANCELLED] Marcando sessão {session_id[:8]} como cancelada. "
+        f"Status anterior: {ts.status}"
+    )
+        #Cancelar notificações pendentes (se existirem)
+        cancelled_count = NotificationService.cancel_pending_reminders_for_session(session, session_id)
+
+        if cancelled_count > 0:
+            logger.info(f"[SESSION CANCELLED] {cancelled_count} notificação(s) cancelada(s)")
+            
+        #atualizar status e timestamp
+        ts.status = "cancelled"
+        ts.updated_at = utc_now()
+
+        try:
+            session.add(ts)
+            session.commit()
+        
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.exception("Erro DB ao marcar sessão como cancelled")
+            raise ValueError("Erro ao marcar a sessão como 'cancelled'.") from e
+        
+        session.refresh(ts)
+        logger.info(f"[SESSION CANCELLED] Sessão {session_id[:8]} marcada como cancelada com sucesso.")
+        return ts

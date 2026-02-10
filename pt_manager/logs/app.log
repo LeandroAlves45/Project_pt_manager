@@ -1410,3 +1410,163 @@ ValueError: Erro ao carregar template de email: cannot access local variable 'te
 2026-02-10 14:51:12 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
 2026-02-10 14:51:12 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
 2026-02-10 14:51:12 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-02-10 18:47:19 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-02-10 18:47:19 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-02-10 18:47:19 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-02-10 18:47:19 | INFO     | apscheduler.scheduler | Scheduler started
+2026-02-10 18:47:19 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:47:19 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:48:19.748773+00:00 (in 59.997230 seconds)
+2026-02-10 18:47:19 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-02-10 18:48:19 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:48:19 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:49:19.748773+00:00 (in 59.993021 seconds)
+2026-02-10 18:48:19 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:49:19 GMT)" (scheduled at 2026-02-10 18:48:19.748773+00:00)
+2026-02-10 18:48:19 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:48:19.756113+00:00
+2026-02-10 18:48:19 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-10 18:48:19 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-10 18:48:19 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:49:19 GMT)" executed successfully
+2026-02-10 18:48:34 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-02-10 18:48:34 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-02-10 18:48:34 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:48:34 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-02-10 18:48:34 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-02-10 18:48:39 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-02-10 18:48:39 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-02-10 18:48:39 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-02-10 18:48:39 | INFO     | apscheduler.scheduler | Scheduler started
+2026-02-10 18:48:39 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:48:39 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:49:39.359912+00:00 (in 59.996701 seconds)
+2026-02-10 18:48:39 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-02-10 18:49:27 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-02-10 18:49:27 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-02-10 18:49:27 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:49:27 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-02-10 18:49:27 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-02-10 18:49:31 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-02-10 18:49:31 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-02-10 18:49:31 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-02-10 18:49:31 | INFO     | apscheduler.scheduler | Scheduler started
+2026-02-10 18:49:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:49:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:50:31.523779+00:00 (in 59.995993 seconds)
+2026-02-10 18:49:31 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-02-10 18:50:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:50:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:51:31.523779+00:00 (in 59.997019 seconds)
+2026-02-10 18:50:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:51:31 GMT)" (scheduled at 2026-02-10 18:50:31.523779+00:00)
+2026-02-10 18:50:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:50:31.527133+00:00
+2026-02-10 18:50:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-10 18:50:31 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-10 18:50:31 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:51:31 GMT)" executed successfully
+2026-02-10 18:51:09 | INFO     | app.services.notification_service | [NOTIFICAÇÃO TEST MODE] Sessão 3ce68d3a - Notificação agendada para 18:53:09 UTC (daqui a 2 minutos)
+2026-02-10 18:51:09 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] ✅ Email HTML criado para cliente rafaellatamires@hotmail.com
+2026-02-10 18:51:09 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] ✅ Email criado para PT ptleoalves@gmail.com
+2026-02-10 18:51:09 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] 📧 2 email(s) criado(s). Envio agendado para: 2026-02-10 18:53:09 UTC
+2026-02-10 18:51:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:51:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:52:31.523779+00:00 (in 59.985770 seconds)
+2026-02-10 18:51:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:52:31 GMT)" (scheduled at 2026-02-10 18:51:31.523779+00:00)
+2026-02-10 18:51:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:51:31.539128+00:00
+2026-02-10 18:51:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-10 18:51:31 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-10 18:51:31 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:52:31 GMT)" executed successfully
+2026-02-10 18:52:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:52:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:53:31.523779+00:00 (in 59.996551 seconds)
+2026-02-10 18:52:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:53:31 GMT)" (scheduled at 2026-02-10 18:52:31.523779+00:00)
+2026-02-10 18:52:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:52:31.527887+00:00
+2026-02-10 18:52:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-10 18:52:31 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-10 18:52:31 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:53:31 GMT)" executed successfully
+2026-02-10 18:53:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:53:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:54:31.523779+00:00 (in 59.998956 seconds)
+2026-02-10 18:53:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:54:31 GMT)" (scheduled at 2026-02-10 18:53:31.523779+00:00)
+2026-02-10 18:53:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:53:31.526041+00:00
+2026-02-10 18:53:31 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] 📬 2 email(s) pronto(s) para envio
+2026-02-10 18:53:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 2 notificação(ões) para enviar
+2026-02-10 18:53:31 | INFO     | app.scheduler | [EMAIL] 📧 Processando para rafaellatamires@hotmail.com
+2026-02-10 18:53:31 | DEBUG    | app.services.email_service | [EMAIL] Template processado para Rafaella
+2026-02-10 18:53:31 | INFO     | app.services.email_service | [EMAIL] Logo anexada ao email com sucesso: assets\logo.png
+2026-02-10 18:53:31 | INFO     | app.services.email_service | [EMAIL] Enviando email para rafaellatamires@hotmail.com
+2026-02-10 18:53:33 | INFO     | app.services.email_service | [EMAIL] Email enviado com sucesso para rafaellatamires@hotmail.com
+2026-02-10 18:53:33 | INFO     | app.scheduler | [EMAIL] ✅ Email HTML enviado para rafaellatamires@hotmail.com
+2026-02-10 18:53:33 | INFO     | app.scheduler | [SUCCESS] ✅ Notificação 2ed7aabf processada com sucesso
+2026-02-10 18:53:33 | INFO     | app.scheduler | [EMAIL] 📧 Processando para ptleoalves@gmail.com
+2026-02-10 18:53:33 | INFO     | app.services.email_service | [EMAIL] Enviando email para ptleoalves@gmail.com
+2026-02-10 18:53:34 | INFO     | app.services.email_service | [EMAIL] Email enviado com sucesso para ptleoalves@gmail.com
+2026-02-10 18:53:34 | INFO     | app.scheduler | [EMAIL] ✅ Email simples enviado para ptleoalves@gmail.com
+2026-02-10 18:53:34 | INFO     | app.scheduler | [SUCCESS] ✅ Notificação 97367614 processada com sucesso
+2026-02-10 18:53:34 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 2 processada(s).
+2026-02-10 18:53:34 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:54:31 GMT)" executed successfully
+2026-02-10 18:53:59 | INFO     | app.services.notification_service | [NOTIFICAÇÃO TEST MODE] Sessão a1c30d9b - Notificação agendada para 18:55:59 UTC (daqui a 2 minutos)
+2026-02-10 18:53:59 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] ✅ Email HTML criado para cliente rafaellatamires@hotmail.com
+2026-02-10 18:53:59 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] ✅ Email criado para PT ptleoalves@gmail.com
+2026-02-10 18:53:59 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] 📧 2 email(s) criado(s). Envio agendado para: 2026-02-10 18:55:59 UTC
+2026-02-10 18:54:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:54:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:55:31.523779+00:00 (in 59.997146 seconds)
+2026-02-10 18:54:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:55:31 GMT)" (scheduled at 2026-02-10 18:54:31.523779+00:00)
+2026-02-10 18:54:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:54:31.527881+00:00
+2026-02-10 18:54:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-10 18:54:31 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-10 18:54:31 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:55:31 GMT)" executed successfully
+2026-02-10 18:54:34 | INFO     | app.services.sessions | [SESSION UPDATE] Horário da sessão a1c30d9b será alterado: 2026-02-10 18:55:48.106000 → 2026-02-10 18:56:59.088000+00:00
+2026-02-10 18:54:34 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] ❌ 2 notificação(ões) cancelada(s) para sessão a1c30d9b
+2026-02-10 18:54:34 | INFO     | app.services.sessions | [SESSION UPDATE] 2 notificações pendentes canceladas para sessão a1c30d9b
+2026-02-10 18:54:34 | INFO     | app.services.notification_service | [NOTIFICAÇÃO TEST MODE] Sessão a1c30d9b - Notificação agendada para 18:56:34 UTC (daqui a 2 minutos)
+2026-02-10 18:54:34 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] ✅ Email HTML criado para cliente rafaellatamires@hotmail.com
+2026-02-10 18:54:34 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] ✅ Email criado para PT ptleoalves@gmail.com
+2026-02-10 18:54:34 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] 📧 2 email(s) criado(s). Envio agendado para: 2026-02-10 18:56:34 UTC
+2026-02-10 18:54:34 | INFO     | app.services.sessions | [SESSION UPDATE] Novas notificações criadas para sessão a1c30d9b com horário atualizado 2026-02-10 18:56:59.088000+00:00.
+2026-02-10 18:55:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:55:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:56:31.523779+00:00 (in 59.983683 seconds)
+2026-02-10 18:55:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:56:31 GMT)" (scheduled at 2026-02-10 18:55:31.523779+00:00)
+2026-02-10 18:55:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:55:31.540766+00:00
+2026-02-10 18:55:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-10 18:55:31 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-10 18:55:31 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:56:31 GMT)" executed successfully
+2026-02-10 18:56:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:56:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:57:31.523779+00:00 (in 59.985068 seconds)
+2026-02-10 18:56:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:57:31 GMT)" (scheduled at 2026-02-10 18:56:31.523779+00:00)
+2026-02-10 18:56:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:56:31.539722+00:00
+2026-02-10 18:56:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-10 18:56:31 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-10 18:56:31 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:57:31 GMT)" executed successfully
+2026-02-10 18:57:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:57:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:58:31.523779+00:00 (in 59.990677 seconds)
+2026-02-10 18:57:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:58:31 GMT)" (scheduled at 2026-02-10 18:57:31.523779+00:00)
+2026-02-10 18:57:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:57:31.534450+00:00
+2026-02-10 18:57:31 | INFO     | app.services.notification_service | [NOTIFICAÇÃO] 📬 2 email(s) pronto(s) para envio
+2026-02-10 18:57:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 2 notificação(ões) para enviar
+2026-02-10 18:57:31 | INFO     | app.scheduler | [EMAIL] 📧 Processando para rafaellatamires@hotmail.com
+2026-02-10 18:57:31 | DEBUG    | app.services.email_service | [EMAIL] Template processado para Rafaella
+2026-02-10 18:57:31 | INFO     | app.services.email_service | [EMAIL] Logo anexada ao email com sucesso: assets\logo.png
+2026-02-10 18:57:31 | INFO     | app.services.email_service | [EMAIL] Enviando email para rafaellatamires@hotmail.com
+2026-02-10 18:57:33 | INFO     | app.services.email_service | [EMAIL] Email enviado com sucesso para rafaellatamires@hotmail.com
+2026-02-10 18:57:33 | INFO     | app.scheduler | [EMAIL] ✅ Email HTML enviado para rafaellatamires@hotmail.com
+2026-02-10 18:57:33 | INFO     | app.scheduler | [SUCCESS] ✅ Notificação 44c045f6 processada com sucesso
+2026-02-10 18:57:33 | INFO     | app.scheduler | [EMAIL] 📧 Processando para ptleoalves@gmail.com
+2026-02-10 18:57:33 | INFO     | app.services.email_service | [EMAIL] Enviando email para ptleoalves@gmail.com
+2026-02-10 18:57:34 | INFO     | app.services.email_service | [EMAIL] Email enviado com sucesso para ptleoalves@gmail.com
+2026-02-10 18:57:34 | INFO     | app.scheduler | [EMAIL] ✅ Email simples enviado para ptleoalves@gmail.com
+2026-02-10 18:57:34 | INFO     | app.scheduler | [SUCCESS] ✅ Notificação dcfb7506 processada com sucesso
+2026-02-10 18:57:34 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 2 processada(s).
+2026-02-10 18:57:34 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:58:31 GMT)" executed successfully
+2026-02-10 18:58:31 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 18:58:31 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 18:59:31.523779+00:00 (in 59.985671 seconds)
+2026-02-10 18:58:31 | INFO     | apscheduler.executors.default | Running job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:59:31 GMT)" (scheduled at 2026-02-10 18:58:31.523779+00:00)
+2026-02-10 18:58:31 | INFO     | app.scheduler | [SCHEDULER] 🔄 Iniciando dispatch às 2026-02-10 18:58:31.538812+00:00
+2026-02-10 18:58:31 | INFO     | app.scheduler | [SCHEDULER] 📬 Encontradas 0 notificação(ões) para enviar
+2026-02-10 18:58:31 | INFO     | app.scheduler | [SCHEDULER] ✅ Dispatch concluído. 0 processada(s).
+2026-02-10 18:58:31 | INFO     | apscheduler.executors.default | Job "dispatch_job (trigger: interval[0:01:00], next run at: 2026-02-10 18:59:31 GMT)" executed successfully
+2026-02-10 19:01:41 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-02-10 19:01:41 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-02-10 19:01:41 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 19:01:41 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-02-10 19:01:41 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-02-10 19:53:39 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-02-10 19:53:39 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-02-10 19:53:39 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-02-10 19:53:39 | INFO     | apscheduler.scheduler | Scheduler started
+2026-02-10 19:53:39 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 19:53:39 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-02-10 19:54:39.968106+00:00 (in 59.996472 seconds)
+2026-02-10 19:53:39 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-02-10 19:54:30 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-02-10 19:54:30 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-02-10 19:54:30 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-02-10 19:54:30 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-02-10 19:54:30 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado

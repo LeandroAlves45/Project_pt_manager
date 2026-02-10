@@ -68,48 +68,49 @@ def update_session(
     payload: TrainingSessionUpdate,
     session: Session = Depends(db_session),
 ) -> TrainingSession:
-    """
-    Atualiza os detalhes de uma sessão de treino existente.
-    """
+    
+    #Atualiza os detalhes de uma sessão de treino existente.
+
     try:
-
-        ts = session.get(TrainingSession, session_id)
-        if not ts:
-            raise ValueError(f"Sessão com ID '{session_id}' não encontrada.")
         
-        #starts_at (date)
-        if payload.starts_at is not None:
-            ts.starts_at = payload.starts_at
-        
-        #Campos simples
-        if payload.duration_minutes is not None:
-            ts.duration_minutes = payload.duration_minutes
-
-        if payload.location is not None:
-            ts.location = payload.location
-        
-        if payload.notes is not None:
-            ts.notes = payload.notes
-        
-        if payload.status is not None:
-            allowed = {"scheduled","missed", "cancelled"}
-            #completed: só via completar sessão
-            if payload.status == "completed":
+        if payload.status == "completed":
                 raise HTTPException(status_code=400, detail="Use o endpoint /complete para marcar a sessão como concluída.")
+
+        #valida status (se fornecido)    
+        if payload.status is not None:
+            allowed_statuses = {"scheduled", "missed", "cancelled"}
+            if payload.status not in allowed_statuses:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Status inválido. Valores permitidos: {allowed_statuses}"
+                )
             
-            if payload.status not in allowed:
-                raise HTTPException(status_code=400, detail=f"Status inválido. Valores permitidos: {allowed}")
-                        
-            ts.status = payload.status
-        session.add(ts)
-        commit_or_rollback(session)
-        session.refresh(ts)
-        return ts
+        #delegação 
+
+        updated_session = SessionService.update_session(
+            session=session,
+            session_id=session_id,
+            starts_at=payload.starts_at,
+            duration_minutes=payload.duration_minutes,
+            location=payload.location,
+            notes=payload.notes,
+            status=payload.status
+        )
+        return updated_session
 
     except HTTPException:
         raise
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
     except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Erro ao atualizar sessão.") from e
+         # Erros de banco de dados
+        logger.exception("Erro ao atualizar sessão")
+        raise HTTPException(
+            status_code=500, 
+            detail="Erro ao atualizar sessão."
+        ) from e
 
 
 @router.post("/{session_id}/missed", status_code=status.HTTP_200_OK, response_model=TrainingSessionRead)
@@ -117,25 +118,23 @@ def mark_session_missed(
     session_id: str,
     session: Session = Depends(db_session),
 ) -> TrainingSession:
-    """
-    Marca a sessão como 'missed' (cliente faltou).
-    Mantém histórico (não apaga).
-    """
+    #Marca a sessão como 'missed' (cliente faltou).
+    #Mantém histórico (não apaga). Não consome pack, apenas sinaliza que a sessão foi perdida.
+
     try:
-        ts = session.get(TrainingSession, session_id)
-        if not ts:
-            raise HTTPException(status_code=404, detail="Sessão não encontrada.")
+        # Delegação ao SessionService
+        return SessionService.mark_session_missed(
+            session=session,
+            session_id=session_id
+        )
 
-        ts.status = "missed"
-
-        session.add(ts)
-        commit_or_rollback(session)
-        session.refresh(ts)
-        return ts
-
-    except HTTPException:
-        raise
+    except ValueError as e:
+        # Erros de validação de negócio
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    
     except SQLAlchemyError as e:
+        # Erros de banco de dados
+        logger.exception("Erro ao marcar falta")
         raise HTTPException(status_code=500, detail="Erro ao marcar falta.") from e
 
 @router.post("/{session_id}/complete", response_model=TrainingSessionRead)
@@ -149,3 +148,19 @@ def complete_session(session_id: str, session: Session = Depends(db_session)) ->
         raise HTTPException(status_code=400, detail=str(e)) from e
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Erro ao completar sessão.") from e
+    
+#endpoint para cancelar sessão
+@router.post("/{session_id}/cancel", response_model=TrainingSessionRead)
+def cancel_session(session_id: str, session: Session = Depends(db_session)) -> TrainingSession:
+    
+    #Cancela uma sessão de treino.
+    # - Se a sessão for cancelada, notificações futuras relacionadas a ela serão canceladas.
+    # - O cliente pode reagendar posteriormente, criando uma nova sessão.
+    
+    try:
+        return SessionService.cancel_session(session=session, session_id=session_id)
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Erro ao cancelar sessão.") from e

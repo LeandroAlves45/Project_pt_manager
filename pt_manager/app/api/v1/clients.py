@@ -10,7 +10,7 @@ from app.services.pack_service import PackService
 from app.db.models.client import Client
 from app.core.db_errors import commit_or_rollback
 
-router = APIRouter(prefix="/clients", tags=["clients"])
+router = APIRouter(prefix="/clients", tags=["Clients"])
 
 #Helper para definir o status do cliente
 def _client_status(client):

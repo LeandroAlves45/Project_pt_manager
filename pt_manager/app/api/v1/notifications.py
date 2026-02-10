@@ -12,7 +12,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
+router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 @router.post("/dispatch")
 def dispach_due_notifications(session: Session = Depends(db_session)) -> dict:
