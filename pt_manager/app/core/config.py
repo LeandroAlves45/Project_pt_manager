@@ -40,4 +40,7 @@ class Settings(BaseSettings):
     notification_test_mode: bool = False
     notification_test_minutes: int = 2
 
+    # Configurações de CORS
+    cors_origins: str = "http://localhost:3000"  # Pode ser uma lista separada por vírgulas
+
 settings = Settings()

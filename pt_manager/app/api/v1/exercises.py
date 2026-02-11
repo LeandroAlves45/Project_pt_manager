@@ -29,8 +29,8 @@ def list_exercises(
     session: Session = Depends(db_session),
     q : Optional[str] = Query(default=None, description = "Filtro por nome"),
     only_active: bool = Query(default=False, description="Retorna apenas exercicios ativos"),
-    Page_size: Optional[int] = Query(default=None, ge=1, le=1000),
-    Page_number: Optional[int] = Query(default=None, ge=1),
+    page_size: Optional[int] = Query(default=None, ge=1, le=1000),
+    page_number: Optional[int] = Query(default=None, ge=1),
 ) -> List[ExerciseRead]:
     #lista de exercicios com filtros simples
     stmt = select(Exercise)
@@ -40,20 +40,30 @@ def list_exercises(
         stmt = stmt.where(Exercise.is_active == True)
     
     if q:
-        stmt = stmt.where(Exercise.name.like(f"%{q.strip()}%"))
+        stmt = stmt.where(Exercise.name.ilike(f"%{q.strip()}%"))
+
      #paginação
-    if (Page_size is None) ^ (Page_number is None):
-        raise HTTPException(status_code=400, detail="Page_size e Page_number devem ser fornecidos juntos para paginação.")
+    if (page_size is None) ^ (page_number is None):
+        raise HTTPException(
+            status_code=400, 
+            detail="Page_size e Page_number devem ser fornecidos juntos para paginação."
+        )
+    
+    # Aplicar paginação APENAS se ambos os parâmetros foram fornecidos
+    if page_size is not None and page_number is not None:
+        # Validação já é feita pelo Query com ge=1, mas podemos adicionar segurança extra
+        if page_size <= 0 or page_number <= 0:
+            raise HTTPException(
+                status_code=400, 
+                detail="Page_size e Page_number devem ser maiores que zero."
+            )
 
-    if Page_size is not None and Page_number is not None:
-        if Page_size <= 0 or Page_number <= 0:
-            raise HTTPException(status_code=400, detail="Page_size e Page_number devem ser maiores que zero.")
-
-    offset = (Page_number - 1) * Page_size
-    stmt = stmt.offset(offset).limit(Page_size)
+        offset = (page_number - 1) * page_size
+        stmt = stmt.offset(offset).limit(page_size)
 
     try:
         rows = session.exec(stmt).all()
+
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Erro ao listar os exercicios.") from e
 
@@ -81,7 +91,7 @@ def create_exercise(
         )
 
         session.add(new_exercise)
-        commit_or_rollback(session, "Erro ao criar novo exercicio.")
+        commit_or_rollback(session)
         session.refresh(new_exercise)
         return _to_read(new_exercise)
     
@@ -114,7 +124,7 @@ def update_exercise(
         exercise.updated_at = utc_now()
 
         session.add(exercise)
-        commit_or_rollback(session, "Erro ao atualizar exercicio.")
+        commit_or_rollback(session)
         session.refresh(exercise)
         return _to_read(exercise)
 
@@ -131,7 +141,7 @@ def delete_exercise(exercise_id: str, session: Session = Depends(db_session)) ->
             raise HTTPException(status_code=404, detail="Exercicio nao encontrado.")
 
         session.delete(exercise)
-        commit_or_rollback(session, "Erro ao deletar exercicio.")
+        commit_or_rollback(session)
         return None
 
     except SQLAlchemyError as e:

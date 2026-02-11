@@ -15,9 +15,14 @@ def commit_or_rollback (session: Session):
             status_code=status.HTTP_409_CONFLICT,
             detail="Conflito de integridade no banco de dados.",
         ) from e
+    
     except SQLAlchemyError as e:
         session.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erro interno no banco de dados.",
         ) from e
+    
+    except Exception as e:
+        session.rollback()
+        raise e

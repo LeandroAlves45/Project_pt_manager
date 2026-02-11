@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, logger
+from typing import List, Optional
+from fastapi import APIRouter, Depends, logger, HTTPException, Query
+from pydantic import BaseModel
 from sqlmodel import Session, select
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.db import session
 from app.db.session import get_session as db_session
@@ -13,6 +16,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
+
+# Schema para notificação pendente
+class PendingNotificationRead(BaseModel):
+    """
+    Schema para leitura de notificação pendente com informações de agendamento
+    """
+    id: str
+    channel: str
+    recipient: str
+    recipient_type: str
+    scheduled_for: str  # ISO format
+    is_due: bool
+    minutes_until_send: float
+    created_at: Optional[str] = None  # ISO format
 
 @router.post("/dispatch")
 def dispach_due_notifications(session: Session = Depends(db_session)) -> dict:
@@ -150,36 +167,61 @@ def dispach_due_notifications(session: Session = Depends(db_session)) -> dict:
     
     return result
 
-@router.get("/pending")
-def list_pending_notifications(limit: int = 100, session: Session = Depends(db_session)) -> dict:
-    #lista de notificações pendentes (para debug)
-
-    stmt =(
+@router.get("/pending", response_model=List[PendingNotificationRead])
+def list_pending_notifications(
+    limit: int = Query(default=100, ge=1, le=1000, description="Número máximo de notificações"),
+    session: Session = Depends(db_session)
+) -> List[PendingNotificationRead]:
+    """
+    Lista notificações pendentes ordenadas por data de envio.
+    Útil para debug e monitorização do sistema de notificações.
+    
+    Args:
+        limit: Número máximo de notificações a retornar (1-1000)
+    
+    Returns:
+        Lista de notificações pendentes com tempo restante até envio
+    """
+    # Buscar notificações pendentes
+    stmt = (
         select(Notification)
         .where(Notification.status == NotificationStatus.PENDING)
         .order_by(Notification.scheduled_for.asc())
         .limit(limit)
     )
-    notifications = session.exec(stmt).all()
+    
+    try:
+        notifications = session.exec(stmt).all()
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao buscar notificações pendentes."
+        ) from e
 
+    # Calcular informações de tempo
     now = datetime.now(timezone.utc)
-
+    
     result = []
     for n in notifications:
-        #calcular tempo restante para envio
+        # Verificar se notificação já está pronta para envio
         is_due = n.scheduled_for <= now
-        time_diff = (n.scheduled_for - now).total_seconds() / 60
-
-        result.append({
-            "id": n.id,
-            "channel": n.channel,
-            "recipient": n.recipient,
-            "recipient_type": n.recipient_type,
-            "scheduled_for": n.scheduled_for.isoformat(),
-            "is_due": is_due,
-            "minutes_until_send": round(time_diff, 1) if time_diff > 0 else 0,
-            "created_at": n.created_at.isoformat() if n.created_at else None
-        })
+        
+        # Calcular tempo restante em minutos
+        time_diff_seconds = (n.scheduled_for - now).total_seconds()
+        time_diff_minutes = time_diff_seconds / 60
+        
+        result.append(
+            PendingNotificationRead(
+                id=n.id,
+                channel=n.channel,
+                recipient=n.recipient,
+                recipient_type=n.recipient_type,
+                scheduled_for=n.scheduled_for.isoformat(),
+                is_due=is_due,
+                minutes_until_send=round(time_diff_minutes, 1) if time_diff_minutes > 0 else 0.0,
+                created_at=n.created_at.isoformat() if n.created_at else None
+            )
+        )
 
     return result
 
