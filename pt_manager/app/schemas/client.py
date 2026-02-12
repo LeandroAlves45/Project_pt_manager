@@ -11,11 +11,12 @@ class ClientCreate(SQLModel):
     aqui validamos formato; regras de negócio mais avançadas ficam em services
     """
 
-    full_name: str = Field(min_length = 1, max_length=200)
-    phone: str = Field(min_length = 8, max_length=20)
+    full_name: str = Field(min_length= 1, max_length=200)
+    phone: str = Field(min_length= 8, max_length=20)
     email: Optional[EmailStr] = None
 
     birth_date: date
+    sex: Optional[str] = Field(default = None)
     @field_validator('sex')
     @classmethod
     def normalize_sex(cls, v: Optional[str]) -> Optional[str]:
@@ -35,9 +36,8 @@ class ClientCreate(SQLModel):
         if v not in mapping:
             raise ValueError("Sexo deve ser: male, female, other, unknown")
         return mapping[v]
-    sex: Optional[str] = Field(default = None)
 
-    height_cm: Optional[int] = Field(default=None, ge= 80, le= 260)
+    height_cm: Optional[int] = Field(default=None, ge=80, le=260)
     objetive: Optional[str] = Field(default=None, max_length=500)
     notes: Optional[str] = None
 
@@ -50,14 +50,14 @@ class ClientUpdate(SQLModel):
     todos os campos são opcionais
     """
 
-    full_name: Optional[str] = Field(default=None, min_length = 1, max_length=200)
-    phone: Optional[str] = Field(default=None, min_length = 8, max_length=20)
+    full_name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    phone: Optional[str] = Field(default=None, min_length=8, max_length=20)
     email: Optional[EmailStr] = None
 
     birth_date: Optional[date] = None
     sex: Optional[str] = None
 
-    height_cm: Optional[int] = Field(default=None, ge= 80, le= 260)
+    height_cm: Optional[int] = Field(default=None, ge=80, le=260)
     objetive: Optional[str] = Field(default=None, max_length=500)
     notes: Optional[str] = None
 
