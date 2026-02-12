@@ -52,6 +52,8 @@ def on_startup() -> None:
     $ alembic upgrade head
     $ uvicorn app.main:app
     """
+    init_db()  # Garante que as tabelas existam (útil para desenvolvimento)
+    
     start_scheduler()
     with Session(engine) as session:
         seed_pack_types(session)
