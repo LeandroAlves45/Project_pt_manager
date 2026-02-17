@@ -233,7 +233,7 @@ async def list_plans(
     return [_plan_to_read(r) for r in rows]
 
 #criação de novo plano de treino
-@router.post("", response_model=TrainingPlanRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=TrainingPlanRead, status_code=status.HTTP_201_CREATED)
 async def create_plan(
     payload: TrainingPlanCreate,
     session: Session = Depends(db_session)
