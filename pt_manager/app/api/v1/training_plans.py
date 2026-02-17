@@ -195,7 +195,7 @@ def _active_to_read(
 
 #get todos os planos de treino
 @router.get("/", response_model=List[TrainingPlanRead])
-def list_plans(
+async def list_plans(
     session: Session = Depends(db_session),
     Client_id: Optional[str] = Query(default=None),
     Plan_id: Optional[str] = Query(default=None),
@@ -234,7 +234,7 @@ def list_plans(
 
 #criação de novo plano de treino
 @router.post("", response_model=TrainingPlanRead, status_code=status.HTTP_201_CREATED)
-def create_plan(
+async def create_plan(
     payload: TrainingPlanCreate,
     session: Session = Depends(db_session)
 ) -> TrainingPlanRead:
@@ -276,7 +276,7 @@ def create_plan(
 
 #atualizar plano de treino
 @router.put("/{plan_id}", response_model=TrainingPlanRead)
-def update_plan(
+async def update_plan(
     plan_id: str,
     payload: TrainingPlanUpdate,
     session: Session = Depends(db_session)
@@ -325,7 +325,7 @@ def update_plan(
 
 #deletar plano de treino
 @router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_plan(
+async def delete_plan(
     plan_id: str,
     session: Session = Depends(db_session)
 ) -> None:
@@ -364,7 +364,7 @@ def delete_plan(
 
 #get de planos de treino dias
 @router.get("/{plan_id}/days", response_model=List[TrainingPlanDayRead])
-def list_plan_days(plan_id: str, session: Session = Depends(db_session),) -> List[TrainingPlanDayRead]:
+async def list_plan_days(plan_id: str, session: Session = Depends(db_session),) -> List[TrainingPlanDayRead]:
 
     #lista os dias de um plano de treino
     try:
@@ -385,7 +385,7 @@ def list_plan_days(plan_id: str, session: Session = Depends(db_session),) -> Lis
     
 #criar novo dia no plano de treino
 @router.post("/{plan_id}/days", response_model=TrainingPlanDayRead, status_code=status.HTTP_201_CREATED)
-def create_plan_day(plan_id: str, payload: TrainingPlanDayCreate, session: Session = Depends(db_session),) -> TrainingPlanDayRead:
+async def create_plan_day(plan_id: str, payload: TrainingPlanDayCreate, session: Session = Depends(db_session),) -> TrainingPlanDayRead:
 
     #cria novo dia no plano de treino
     try:
@@ -410,7 +410,7 @@ def create_plan_day(plan_id: str, payload: TrainingPlanDayCreate, session: Sessi
 
 #atualizar dia do plano de treino
 @router.put("/days/{day_id}", response_model=TrainingPlanDayRead)
-def update_plan_day(day_id: str, payload: TrainingPlanDayUpdate, session: Session = Depends(db_session)) -> TrainingPlanDayRead:
+async def update_plan_day(day_id: str, payload: TrainingPlanDayUpdate, session: Session = Depends(db_session)) -> TrainingPlanDayRead:
 
     #atualiza dia do plano de treino existente
     try:
@@ -438,7 +438,7 @@ def update_plan_day(day_id: str, payload: TrainingPlanDayUpdate, session: Sessio
 
 #delete o dia de treino
 @router.delete("/days/{day_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_plan_day(day_id: str, session: Session = Depends(db_session)) -> None:
+async def delete_plan_day(day_id: str, session: Session = Depends(db_session)) -> None:
     #deleta dia do plano de treino existente
     try:
         day = session.get(TrainingPlanDay, day_id)
@@ -499,7 +499,7 @@ def _day_exercise_with_details_to_read(
 
 #get dos exercicios do dia do plano de treino
 @router.get("/days/{day_id}/exercises", response_model=List[PlanDayExerciseRead])
-def list_day_exercises(day_id: str, session: Session = Depends(db_session),) -> List[PlanDayExerciseRead]:
+async def list_day_exercises(day_id: str, session: Session = Depends(db_session),) -> List[PlanDayExerciseRead]:
 
     #lista os exercicios de um dia do plano de treino
     try:
@@ -527,7 +527,7 @@ def list_day_exercises(day_id: str, session: Session = Depends(db_session),) -> 
 
 #criar novo exercicio no dia do plano de treino
 @router.post("/days/{day_id}/exercises", response_model=PlanDayExerciseRead, status_code=status.HTTP_201_CREATED)
-def create_day_exercise(day_id: str,payload: PlanDayExerciseCreate, session: Session = Depends(db_session),) -> PlanDayExerciseRead:
+async def create_day_exercise(day_id: str,payload: PlanDayExerciseCreate, session: Session = Depends(db_session),) -> PlanDayExerciseRead:
     
     #cria novo exercicio no dia do plano de treino
     try:
@@ -564,7 +564,7 @@ def create_day_exercise(day_id: str,payload: PlanDayExerciseCreate, session: Ses
     
 #atualizar exercicio do dia do plano de treino
 @router.put("/days/exercises/{day_exercise_id}", response_model=PlanDayExerciseRead)
-def update_day_exercise(day_exercise_id: str, payload: PlanDayExerciseUpdate, session: Session = Depends(db_session)) -> PlanDayExerciseRead:
+async def update_day_exercise(day_exercise_id: str, payload: PlanDayExerciseUpdate, session: Session = Depends(db_session)) -> PlanDayExerciseRead:
 
     #atualiza exercicio do dia do plano de treino existente
     try:
@@ -606,7 +606,7 @@ def update_day_exercise(day_exercise_id: str, payload: PlanDayExerciseUpdate, se
 
 #delete o exercicio do dia do plano de treino
 @router.delete("/days/exercises/{day_exercise_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_day_exercise(day_exercise_id: str, session: Session = Depends(db_session)) -> None:
+async def delete_day_exercise(day_exercise_id: str, session: Session = Depends(db_session)) -> None:
 
     #delete do exercicio do plano de treino
     try:
@@ -633,7 +633,7 @@ def delete_day_exercise(day_exercise_id: str, session: Session = Depends(db_sess
 
 #get das cargas por série do exercicio do dia do plano de treino
 @router.get("/days/exercises/{day_exercise_id}/loads", response_model=List[PlanExerciseSetLoadRead])
-def list_set_loads(day_exercise_id: str, session: Session = Depends(db_session),) -> List[PlanExerciseSetLoadRead]:
+async def list_set_loads(day_exercise_id: str, session: Session = Depends(db_session),) -> List[PlanExerciseSetLoadRead]:
 
     #lista as cargas por série de um exercicio do dia do plano de treino
     try:
@@ -666,7 +666,7 @@ def list_set_loads(day_exercise_id: str, session: Session = Depends(db_session),
 
 #criar nova carga por série do exercicio do dia do plano de treino
 @router.post("/days/exercises/{day_exercise_id}/loads", response_model=PlanExerciseSetLoadRead, status_code=status.HTTP_201_CREATED)
-def create_set_load(day_exercise_id: str,payload: PlanExerciseSetLoadCreate, session: Session = Depends(db_session),) -> PlanExerciseSetLoadRead:
+async def create_set_load(day_exercise_id: str,payload: PlanExerciseSetLoadCreate, session: Session = Depends(db_session),) -> PlanExerciseSetLoadRead:
     
     #cria nova carga por série do exercicio do dia do plano de treino
     try:
@@ -709,7 +709,7 @@ def create_set_load(day_exercise_id: str,payload: PlanExerciseSetLoadCreate, ses
     
 #atualizar carga por série do exercicio do dia do plano de treino
 @router.put("/days/exercises/loads/{set_load_id}", response_model=PlanExerciseSetLoadRead)
-def update_set_load(set_load_id: str, payload: PlanExerciseSetLoadUpdate, session: Session = Depends(db_session)) -> PlanExerciseSetLoadRead:
+async def update_set_load(set_load_id: str, payload: PlanExerciseSetLoadUpdate, session: Session = Depends(db_session)) -> PlanExerciseSetLoadRead:
 
     #atualiza carga por série do exercicio do dia do plano de treino existente
     try:
@@ -748,7 +748,7 @@ def update_set_load(set_load_id: str, payload: PlanExerciseSetLoadUpdate, sessio
     
 #delete da carga por série do exercicio do dia do plano de treino
 @router.delete("/set-loads/{set_load_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_set_load(set_load_id: str, session: Session = Depends(db_session)) -> None:
+async def delete_set_load(set_load_id: str, session: Session = Depends(db_session)) -> None:
 
     #delete da carga por série do exercicio do dia do plano de treino
     try:
@@ -769,7 +769,7 @@ def delete_set_load(set_load_id: str, session: Session = Depends(db_session)) ->
 
 """Obtém o plano ativo do cliente (se existir)."""
 @router.get("/active-plan/{client_id}", response_model=Optional[ClientActivePlanRead])
-def get_active_plan(client_id: str, session: Session = Depends(db_session),) -> Optional[ClientActivePlanRead]:
+async def get_active_plan(client_id: str, session: Session = Depends(db_session),) -> Optional[ClientActivePlanRead]:
     
     #obtem o plano ativo do cliente (se existir)
     try:
@@ -797,7 +797,7 @@ def get_active_plan(client_id: str, session: Session = Depends(db_session),) -> 
         raise HTTPException(status_code=500, detail="Erro ao obter o plano ativo do cliente.") from e
 
 @router.post("/active-plan", response_model=ClientActivePlanRead, status_code=status.HTTP_201_CREATED)
-def set_active_plan(payload: ClientActivePlanCreate, session: Session = Depends(db_session)) -> ClientActivePlanRead:
+async def set_active_plan(payload: ClientActivePlanCreate, session: Session = Depends(db_session)) -> ClientActivePlanRead:
 
     try:
         client = session.get(Client, payload.client_id)
@@ -857,7 +857,7 @@ def set_active_plan(payload: ClientActivePlanCreate, session: Session = Depends(
 
 #Encerra o plano ativo do cliente (active_to = hoje).
 @router.post("/clients/{client_id}/active/close", response_model=Optional[ClientActivePlanRead])
-def close_active_plan(client_id: str, session: Session = Depends(db_session)) -> Optional[ClientActivePlanRead]:
+async def close_active_plan(client_id: str, session: Session = Depends(db_session)) -> Optional[ClientActivePlanRead]:
 
     try:
         client = session.get(Client, client_id)
@@ -894,7 +894,7 @@ def close_active_plan(client_id: str, session: Session = Depends(db_session)) ->
     #===================
 
 @router.post("/{template_plan_id}/clone-to-client/{client_id}", response_model=TrainingPlanRead, status_code=status.HTTP_201_CREATED)
-def clone_template_to_client(template_plan_id: str, payload: ClonePlanToClientCreate, session: Session = Depends(db_session)) -> TrainingPlanRead:
+async def clone_template_to_client(template_plan_id: str, payload: ClonePlanToClientCreate, session: Session = Depends(db_session)) -> TrainingPlanRead:
     
     # =========================
     # 1) Validar cliente

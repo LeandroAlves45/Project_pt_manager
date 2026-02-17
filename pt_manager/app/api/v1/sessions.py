@@ -15,7 +15,7 @@ router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
 
 @router.get("", response_model=list[TrainingSessionRead])
-def list_sessions(
+async def list_sessions(
     client_id: str | None = None,
     limit: int = 100,
     session: Session = Depends(db_session),
@@ -35,7 +35,7 @@ def list_sessions(
         raise HTTPException(status_code=500, detail="Erro ao listar sessões.") from e
 
 @router.post("/clients/{client_id}", response_model=TrainingSessionRead, status_code=status.HTTP_201_CREATED)
-def schedule_session_for_client(
+async def schedule_session_for_client(
     client_id: str,
     payload: TrainingSessionCreate,
     session: Session = Depends(db_session),
@@ -63,7 +63,7 @@ def schedule_session_for_client(
         raise HTTPException(status_code=500, detail=str(e)) from e  
 
 @router.put("/{session_id}", response_model=TrainingSessionRead)
-def update_session(
+async def update_session(
     session_id: str,
     payload: TrainingSessionUpdate,
     session: Session = Depends(db_session),
@@ -114,7 +114,7 @@ def update_session(
 
 
 @router.post("/{session_id}/missed", status_code=status.HTTP_200_OK, response_model=TrainingSessionRead)
-def mark_session_missed(
+async def mark_session_missed(
     session_id: str,
     session: Session = Depends(db_session),
 ) -> TrainingSession:
@@ -138,7 +138,7 @@ def mark_session_missed(
         raise HTTPException(status_code=500, detail="Erro ao marcar falta.") from e
 
 @router.post("/{session_id}/complete", response_model=TrainingSessionRead)
-def complete_session(session_id: str, session: Session = Depends(db_session)) -> TrainingSession:
+async def complete_session(session_id: str, session: Session = Depends(db_session)) -> TrainingSession:
     """
     Marca uma sessão como concluída e consome um pack do cliente.
     """
@@ -151,7 +151,7 @@ def complete_session(session_id: str, session: Session = Depends(db_session)) ->
     
 #endpoint para cancelar sessão
 @router.post("/{session_id}/cancel", response_model=TrainingSessionRead)
-def cancel_session(session_id: str, session: Session = Depends(db_session)) -> TrainingSession:
+async def cancel_session(session_id: str, session: Session = Depends(db_session)) -> TrainingSession:
     
     #Cancela uma sessão de treino.
     # - Se a sessão for cancelada, notificações futuras relacionadas a ela serão canceladas.

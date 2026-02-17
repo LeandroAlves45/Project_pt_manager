@@ -13,7 +13,7 @@ from app.core.db_errors import commit_or_rollback
 router = APIRouter(prefix="/packs", tags=["Packs"])
 
 @router.post("/clients/{client_id}/purchase", response_model=ClientPackRead, status_code=status.HTTP_201_CREATED)
-def purchase_pack_for_client(
+async def purchase_pack_for_client(
     client_id: str,
     payload: ClientPackPurchase,
     session: Session = Depends(db_session),
@@ -64,7 +64,7 @@ def purchase_pack_for_client(
         raise HTTPException(status_code=500, detail=f"SQLAlchemyError: {getattr(e, 'orig', e)}") from e
     
 @router.get("/clients/{client_id}", response_model=list[ClientPackRead])
-def list_client_packs(client_id: str, session: Session = Depends(db_session)) -> list[ClientPack]:
+async def list_client_packs(client_id: str, session: Session = Depends(db_session)) -> list[ClientPack]:
     """
     Lista packs comprados por um cliente.
     """
@@ -80,7 +80,7 @@ def list_client_packs(client_id: str, session: Session = Depends(db_session)) ->
 
 
 @router.get("/clients/{client_id}/active", response_model=ClientPackRead | None)
-def get_active_pack(client_id: str, session: Session = Depends(db_session)) -> ClientPack | None:
+async def get_active_pack(client_id: str, session: Session = Depends(db_session)) -> ClientPack | None:
     """
     Retorna o pack ativo (se existir).
     """

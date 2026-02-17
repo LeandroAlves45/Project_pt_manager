@@ -32,7 +32,7 @@ class PendingNotificationRead(BaseModel):
     created_at: Optional[str] = None  # ISO format
 
 @router.post("/dispatch")
-def dispach_due_notifications(session: Session = Depends(db_session)) -> dict:
+async def dispach_due_notifications(session: Session = Depends(db_session)) -> dict:
     #Endpoint para o worker process chamar periodicamente (ex: a cada 5 minutos) e disparar notificações pendentes.
 
     logger.info("[API DISPATCH] Iniciando processamento manual de notificações")
@@ -168,7 +168,7 @@ def dispach_due_notifications(session: Session = Depends(db_session)) -> dict:
     return result
 
 @router.get("/pending", response_model=List[PendingNotificationRead])
-def list_pending_notifications(
+async def list_pending_notifications(
     limit: int = Query(default=100, ge=1, le=1000, description="Número máximo de notificações"),
     session: Session = Depends(db_session)
 ) -> List[PendingNotificationRead]:
@@ -226,7 +226,7 @@ def list_pending_notifications(
     return result
 
 @router.get("/stats")
-def get_notification_stats(session: Session = Depends(db_session)) -> dict:
+async def get_notification_stats(session: Session = Depends(db_session)) -> dict:
     #Estatísticas básicas de notificações (total, pendentes, enviadas, falhadas)
 
     # Contar por status
@@ -264,7 +264,7 @@ def get_notification_stats(session: Session = Depends(db_session)) -> dict:
     return stats
 
 @router.delete("/{notification_id}")
-def delete_notification(notification_id: str, session: Session = Depends(db_session)) -> dict:
+async def delete_notification(notification_id: str, session: Session = Depends(db_session)) -> dict:
 
     notification = session.get(Notification, notification_id)
 

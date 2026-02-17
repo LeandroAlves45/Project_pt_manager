@@ -43,7 +43,7 @@ def _to_client_read(c: Client) -> ClientRead:
     )
 
 @router.get("", response_model=list[ClientReadWithPack])
-def list_clients(Client_id: Optional[str] = None, 
+async def list_clients(Client_id: Optional[str] = None, 
                  Status: Optional[int] = None, 
                  Page_size: Optional[int] = None, 
                  Page_number: Optional[int] = None, 
@@ -120,7 +120,7 @@ def list_clients(Client_id: Optional[str] = None,
 
 
 @router.post("", response_model=ClientRead, status_code=status.HTTP_201_CREATED)
-def create_client(payload: ClientCreate, session: Session = Depends(db_session)) -> Client:
+async def create_client(payload: ClientCreate, session: Session = Depends(db_session)) -> Client:
     """
     Cria um novo cliente.
     Não permite criar clientes já arquivados.
@@ -168,7 +168,7 @@ def create_client(payload: ClientCreate, session: Session = Depends(db_session))
 
 
 @router.patch("/{client_id}", response_model=ClientRead)
-def update_client(client_id: str, payload: ClientUpdate, session: Session = Depends(db_session)) -> Client:
+async def update_client(client_id: str, payload: ClientUpdate, session: Session = Depends(db_session)) -> Client:
     """
     Update parcial do cliente
     Atualiza os dados de um cliente específico.
@@ -214,7 +214,7 @@ def update_client(client_id: str, payload: ClientUpdate, session: Session = Depe
         raise HTTPException(status_code=500, detail="Erro inesperado ao atualizar cliente.") from e
 
 @router.post("/{client_id}/archive", response_model=ClientRead)
-def archive_client(client_id: str, session: Session = Depends(db_session)) -> Client:
+async def archive_client(client_id: str, session: Session = Depends(db_session)) -> Client:
     """
     Arquiva (soft delete) um cliente.
     """
@@ -240,7 +240,7 @@ def archive_client(client_id: str, session: Session = Depends(db_session)) -> Cl
         raise HTTPException(status_code=500, detail="Erro inesperado ao arquivar cliente.") from e
 
 @router.post("/{client_id}/unarchive", response_model=ClientRead)
-def unarchive_client(client_id: str, session: Session = Depends(db_session)) -> Client:
+async def unarchive_client(client_id: str, session: Session = Depends(db_session)) -> Client:
     """
     Reativa um cliente.
     """
@@ -265,7 +265,7 @@ def unarchive_client(client_id: str, session: Session = Depends(db_session)) -> 
         raise HTTPException(status_code=500, detail="Erro inesperado ao reativar cliente.") from e
 
 @router.delete ("/{client_id}", status_code= 204)
-def delete_client(client_id : str, hard: bool = Query(default = False, description = "hard=false -> arquiva, hard=true -> apaga da BD"), session: Session = Depends(db_session),) -> None:
+async def delete_client(client_id : str, hard: bool = Query(default = False, description = "hard=false -> arquiva, hard=true -> apaga da BD"), session: Session = Depends(db_session),) -> None:
     """
     Delete do cliente.
 

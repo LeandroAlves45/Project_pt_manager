@@ -5,7 +5,7 @@ from app.api.deps import db_session
 router = APIRouter(prefix="/health", tags=["health"])
 
 @router.get("")
-def health_check(session: Session = Depends(db_session)):
+async def health_check(session: Session = Depends(db_session)):
     """
     Endpoint de health check para monitoramento.
     

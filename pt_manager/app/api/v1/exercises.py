@@ -25,7 +25,7 @@ def _to_read(e: Exercise) -> ExerciseRead:
 
 #get de todos os exercicios
 @router.get("/", response_model=List[ExerciseRead])
-def list_exercises(
+async def list_exercises(
     session: Session = Depends(db_session),
     q : Optional[str] = Query(default=None, description = "Filtro por nome"),
     only_active: bool = Query(default=False, description="Retorna apenas exercicios ativos"),
@@ -71,7 +71,7 @@ def list_exercises(
 
 #criação de novo exercicio
 @router.post("/", response_model=ExerciseRead, status_code=status.HTTP_201_CREATED)
-def create_exercise(
+async def create_exercise(
     payload: ExerciseCreate,
     session: Session = Depends(db_session)
 ) -> ExerciseRead:
@@ -100,7 +100,7 @@ def create_exercise(
 
 #atualização de exercicio
 @router.put("/{exercise_id}", response_model=ExerciseRead)
-def update_exercise(
+async def update_exercise(
     exercise_id: str,
     payload: ExerciseUpdate,
     session: Session = Depends(db_session)
@@ -133,7 +133,7 @@ def update_exercise(
     
 #delete exercicio
 @router.delete("/{exercise_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_exercise(exercise_id: str, session: Session = Depends(db_session)) -> None:
+async def delete_exercise(exercise_id: str, session: Session = Depends(db_session)) -> None:
     #deleta exercicio existente
     try:
         exercise = session.get(Exercise, exercise_id)

@@ -11,7 +11,7 @@ router = APIRouter(prefix="/pack-types", tags=["Pack-Types"])
 
 
 @router.get("", response_model=list[PackTypeRead])
-def list_pack_types(session: Session = Depends(db_session)) -> list[PackTypeRead]:
+async def list_pack_types(session: Session = Depends(db_session)) -> list[PackTypeRead]:
     """
     Lista todos os tipos de pack.
     """
@@ -23,7 +23,7 @@ def list_pack_types(session: Session = Depends(db_session)) -> list[PackTypeRead
         raise HTTPException(status_code=500, detail="Erro ao listar Pack Types.") from e
 
 @router.post("", response_model=PackTypeRead, status_code=status.HTTP_201_CREATED)
-def create_pack_type(payload: PackTypeCreate, session: Session = Depends(db_session)) -> PackType:
+async def create_pack_type(payload: PackTypeCreate, session: Session = Depends(db_session)) -> PackType:
     """
     Cria um novo tipo de pack
     """
@@ -50,7 +50,7 @@ def create_pack_type(payload: PackTypeCreate, session: Session = Depends(db_sess
 
 
 @router.put("/{pack_type_id}", response_model= PackTypeRead)
-def update_pack_type(pack_type_id: str,
+async def update_pack_type(pack_type_id: str,
     payload: PackTypeUpdate,
     session: Session = Depends(db_session),
 ) -> PackType:
@@ -91,7 +91,7 @@ def update_pack_type(pack_type_id: str,
 
 
 @router.delete("/{pack_type_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_pack_type(pack_type_id: str , session: Session = Depends(db_session)) -> None:
+async def delete_pack_type(pack_type_id: str , session: Session = Depends(db_session)) -> None:
     """
     Elimina um tipo de pack pelo ID.
     """
