@@ -102,7 +102,7 @@ def on_startup() -> None:
     # Cria tabelas que ainda não existam 
     init_db()  
     
-    from app.db.migrations import run_migrations
+    from app.db.migrate import run_migrations
     run_migrations()
 
     start_scheduler()
