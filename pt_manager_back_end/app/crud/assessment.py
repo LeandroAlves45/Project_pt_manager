@@ -1,111 +1,89 @@
 """
-CRUD para o sistema de avaliações físicas.
-
-Esta camada separa a lógica de acesso a dados dos routers
-Os routers tratam de HTTP, o crud trata de queries e transações com o banco.
-
-Padrão:
-- Recebe Session e schemas validados
--Devolve modelos ORM 
--Nunca levanta HTTPException - isso é responsabilidade dos routers
+CRUD para avaliações iniciais (InitialAssessment).
+ 
+Esta camada trata exclusivamente do acesso à base de dados.
+Nunca lança HTTPException — isso é responsabilidade dos routers.
+ 
+Diferença entre os dois tipos de avaliação:
+    InitialAssessment — formulário de saúde completo, feito uma vez pelo trainer
+    CheckIn           — check-in periódico de progresso, pode ser preenchido pelo cliente
+    Este ficheiro trata apenas do InitialAssessment.
 """
 
 from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlmodel import Session, select
-from app.db.models.assessment import Assessment, AssessmentMeasurement, AssessmentPhoto
-from app.schemas.assessment import AssessmentCreate
+from app.db.models.initial_assessment import InitialAssessment
+from app.schemas.initial_assessment import InitialAssessmentCreate, InitialAssessmentUpdate
 
-def get_assessment_by_id(session: Session, assessment_id: str) -> Optional[Assessment]:
-    """
-    Recupera uma avaliação física pelo seu ID.
-    """
-    return session.get(Assessment, assessment_id)
+def get_initial_assessment_by_id(session: Session, assessment_id: str) -> Optional[InitialAssessment]:
+    """Devolve uma avaliação inicial pelo seu ID, ou None se não existir."""
+    return session.get(InitialAssessment, assessment_id)
 
-def list_assessments_by_client(session: Session, client_id: str, include_archived: bool = False) -> List[Assessment]:
+def list_initial_assessments_by_client(session: Session, client_id: str) -> List[InitialAssessment]:
     """
-    Lista todas as avaliações físicas de um cliente específico, ordenadas da mais recente para a mais antiga.
+    Lista todas as avaliações iniciais de um cliente, ordenadas da mais recente.
+    Um cliente pode ter mais do que uma avaliação inicial ao longo do tempo.
     """
     statement = (
-        select(Assessment)
-        .where(Assessment.client_id == client_id)
-        .order_by(Assessment.created_at.desc()) #ordena da mais recente para a mais antiga
+        select(InitialAssessment)
+        .where(InitialAssessment.client_id == client_id)
+        .order_by(InitialAssessment.created_at.desc()) 
     )
-    if not include_archived:
-        #Filtra apenas avaliações ativas (não arquivadas)
-        statement = statement.where(Assessment.archived_at.is_(None))
+
     return session.exec(statement).all()
 
-def count_assessments_by_client(session: Session, client_id: str) -> int:
+def count_initial_assessments_by_client(session: Session, client_id: str) -> int:
     """
-    Conta o número total de avaliações físicas de um cliente, incluindo as arquivadas.
+    Conta o número de avaliações iniciais de um cliente.
+    Usado para determinar se é a primeira avaliação (lógica de negócio no router).
     """
-    statement = select(Assessment).where(Assessment.client_id == client_id)
+    statement = select(InitialAssessment).where(InitialAssessment.client_id == client_id)
     return len(session.exec(statement).all())
 
-def create_assessment(session: Session, payload: AssessmentCreate) -> Assessment:
+def create_initial_assessment(
+    session: Session,
+    payload: InitialAssessmentCreate,
+    trainer_id: str) -> InitialAssessment:
     """
-    Cria uma nova avaliação física com os seus measurements e fotos numa só transação.
+    Cria uma nova avaliação inicial para um cliente.
+ 
+    O health_questionnaire é serializado para dict antes de persistir
+    — o campo no modelo é JSONB, aceita dict directamente.
     """
-    #Serializa o questionário para JSON
+    #Serializa o questionário Pydantic para dict (JSONB no postregesql)
     queationnaire_dict = None
-    if payload.questionnaire:
-        queationnaire_dict = payload.questionnaire.model_dump(exclude_none=True)
+    if payload.health_questionnaire:
+        queationnaire_dict = payload.health_questionnaire.model_dump(exclude_none=True)
 
     #Cria o registo principal da avaliação
-    assessment = Assessment(
+    assessment = InitialAssessment(
         client_id=payload.client_id,
+        assessed_by_trainer_id=trainer_id,
         weight_kg=payload.weight_kg,
+        height_cm=payload.height_cm,
         body_fat=payload.body_fat,
+        health_questionnaire=queationnaire_dict,
         notes=payload.notes,
-        questionnaire=queationnaire_dict
     )
     session.add(assessment)
 
-    #Flush gera o ID na sessão sem fazer commit á BD
-    #Necessário para usar assessment.id nas tabelas filhas
-    session.flush()
+def update_initial_assessment(session: Session, assessment: InitialAssessment, payload: InitialAssessmentUpdate) -> InitialAssessment:
+    """
+    Actualiza campos de uma avaliação inicial existente (PATCH parcial).
+    Apenas os campos enviados no payload são alterados.
+    """
+    data = payload.model_dump(exclude_unset=True)
 
-    #Cria os registos de measurements
-    for m in payload.measurements:
-        measurement = AssessmentMeasurement(
-            assessment_id=assessment.id,
-            measurement_type=m.measurement_type,
-            value=m.value
-        )
-        session.add(measurement)
+    if "health_questionnaire" in data and data["health_questionnaire"] is not None:
+        data["health_questionnaire"] = payload.health_questionnaire.model_dump(exclude_none=True)
 
-    #Cria os registos de photos
-    for p in payload.photos:
-        photo = AssessmentPhoto(
-            assessment_id=assessment.id,
-            photo_type=p.photo_type,
-            url=p.url
-        )
-        session.add(photo)
     
-    return assessment
+    for key, value in data.items():
+        setattr(assessment, key, value)
 
-def soft_delete_assessment(session: Session, assessment: Assessment) -> Assessment:
-    """
-    Arquiva uma avaliação física (soft delete) definindo a data de arquivamento.
-    """
-    assessment.archived_at = datetime.now(timezone.utc)
     assessment.updated_at = datetime.now(timezone.utc)
     session.add(assessment)
     return assessment
 
-def get_measurements_by_assessment(session: Session, assessment_id: str) -> List[AssessmentMeasurement]:
-    """
-    Lista todos os perímetros corporais de uma avaliação física específica.
-    """
-    statement = select(AssessmentMeasurement).where(AssessmentMeasurement.assessment_id == assessment_id)
-    return session.exec(statement).all()
-
-def get_photos_by_assessment(session: Session, assessment_id: str) -> List[AssessmentPhoto]:
-    """
-    Lista todas as fotos de progresso de uma avaliação física específica.
-    """
-    statement = select(AssessmentPhoto).where(AssessmentPhoto.assessment_id == assessment_id)
-    return session.exec(statement).all()
