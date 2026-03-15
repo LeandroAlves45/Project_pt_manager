@@ -70,4 +70,3 @@ def seed_superuser(session: Session) -> None:
     except Exception as e:
         session.rollback()
         logger.error(f"Erro ao criar superuser: {e}")
-        
