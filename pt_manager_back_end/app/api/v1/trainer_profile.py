@@ -1,15 +1,18 @@
 """
-Endpoints para gestão do perfil e logo do trainer.
-
+Router de perfil e branding do trainer.
+ 
 Endpoints:
-  GET  /trainer/profile           — ver perfil completo
-  PUT  /trainer/profile           — editar perfil (nome, email, etc.)
-  POST /trainer/logo              — fazer upload do logo
-  DELETE /trainer/logo            — remover o logo
+    GET   /trainer-profile/settings        — branding (cor, logo, app_name) — usado no login
+    PATCH /trainer-profile/settings        — actualizar cor primária e app_name
+    GET   /trainer-profile/profile         — perfil completo do trainer
+    POST  /trainer-profile/logo            — upload de logo para Cloudinary
+    DELETE /trainer-profile/logo           — remover logo
 """
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlmodel import Session
+from datetime import datetime, timezone
+from typing import Optional
 
 from app.api.deps import db_session
 from app.db.models.user import User
@@ -17,7 +20,7 @@ from app.services.upload_service import UploadService
 from app.core.config import settings
 from app.core.security import require_active_subscription
 
-router = APIRouter(prefix="/trainer", tags=["Trainer Profile"])
+router = APIRouter(prefix="/trainer-profile", tags=["Trainer Profile"])
 
 #Tipos de imagem permitidos para upload de logo
 ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"]

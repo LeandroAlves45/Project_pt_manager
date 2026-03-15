@@ -16,5 +16,5 @@ COPY app ./app
 ENV PYTHONUNBUFFERED=1
 
 # Inicia a aplicação
-# ${PORT:-8000} usa a variável PORT do Railway, ou 8000 como fallback
+# ${PORT:-8000} usa a variável PORT do Render, ou 8000 como fallback
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

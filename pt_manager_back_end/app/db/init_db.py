@@ -14,7 +14,8 @@ from app.db.migrate import run_migrations
 # Modelos de utilizadores e autenticação
 from app.db.models.user import User                                         
 from app.db.models.client import Client                                      
-from app.db.models.trainer_subscription import TrainerSubscription    
+from app.db.models.trainer_subscription import TrainerSubscription
+from app.db.models.trainer_settings import TrainerSettings    
 
 # Modelos de sessões e packs
 from app.db.models.session import TrainingSession, PackConsumption          
