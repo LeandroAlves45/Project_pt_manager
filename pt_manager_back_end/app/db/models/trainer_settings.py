@@ -26,10 +26,10 @@ class TrainerSettings(SQLModel, table=True):
 
     __tablename__ = "trainer_settings"
 
-    id: uuid.UUID = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
 
     # FK para o trainer - UNIQUE para garantir relação 1:1
-    trainer_user_id: uuid.UUID = Field(foreign_key="users.id", unique=True, index=True)
+    trainer_user_id: str = Field(foreign_key="users.id", unique=True, index=True)
 
     # Cor primária do tema em formato hex (com #)
     # Default: azul PT Manager. Injectada como CSS variable no login.

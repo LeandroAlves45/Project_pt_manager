@@ -15,10 +15,13 @@ Convenção de routers:
     dentro de cada router individualmente via Depends.
 """
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import logging
 
+logger = logging.getLogger(__name__)
 
 from app.core.security import require_api_key, get_current_user
 from app.core.logging import setup_logging
@@ -53,6 +56,8 @@ from app.api.v1.stripe_webhook import router as webhooks_router
 from app.api.v1.billing import router as billing_router
 from app.api.v1.admin import router as admin_router
 from app.api.v1.trainer_profile import router as trainer_profile_router
+from app.api.v1.client_portal import router as client_portal_router
+from app.api.v1.client_supplements import router as client_supplements_router
 
 from app.scheduler import start_scheduler, shutdown_scheduler
 
@@ -70,6 +75,38 @@ app = FastAPI(
     version= "0.1.0",
     description="API multi-tenant para gestão de clientes de Personal Trainers.",
 )
+
+# -------------------------------------------------------
+# Handler global de excepções
+#
+# Sem este handler, erros inesperados devolvem stack traces completos
+# ao cliente — expõe detalhes da implementação em produção.
+#
+# Comportamento:
+#   - HTTPException: deixa passar normalmente (tem status_code próprio)
+#   - Qualquer outra Exception: devolve 500 genérico e regista o erro no log
+# -------------------------------------------------------
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """
+    Captura qualquer excepção não tratada e devolve uma resposta 500 genérica.
+    O stack trace real é registado no log para diagnóstico, mas nunca exposto ao cliente.
+    """
+    if isinstance(exc, HTTPException):
+        # Deixa passar HTTPExceptions para que o FastAPI as trate normalmente
+        raise exc
+    
+    # Para outras exceções, regista o erro e devolve uma resposta genérica
+    logger.error(
+        f"Erro não tratado em {request.method} {request.url}: {exc}",
+        exc_info=True,
+    )
+    
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Ocorreu um erro inesperado. Por favor, tente novamente."}
+    )
 
 # ----------------------------------------------
 # Configuração de CORS
@@ -170,3 +207,5 @@ app.include_router(notifications_router, prefix="/api/v1", dependencies=jwt_depe
 app.include_router(assessments_router, prefix="/api/v1", dependencies=jwt_dependency)
 app.include_router(nutrition_router, prefix="/api/v1", dependencies=jwt_dependency)
 app.include_router(checkins_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(client_portal_router, prefix="/api/v1", dependencies=jwt_dependency)
+app.include_router(client_supplements_router, prefix="/api/v1", dependencies=jwt_dependency)

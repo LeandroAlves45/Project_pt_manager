@@ -12,6 +12,7 @@ from datetime import date, datetime, timezone
 from typing import Optional
 
 from sqlmodel import Session, select
+from sqlalchemy import func
 
 from app.db.models.trainer_subscription import TrainerSubscription, SubscriptionStatus, SubscriptionTier
 from app.db.models.client import Client
@@ -53,7 +54,7 @@ class SubscriptionService:
             return SubscriptionTier.PRO
         
     @staticmethod
-    def can_add_client(subscription: TrainerSubscription) -> tuple[bool, str]:
+    def can_add_client(subscription: Optional[TrainerSubscription]) -> tuple[bool, str]:
         """
         Verifica se o trainer pode adicionar mais um cliente.
 
@@ -66,6 +67,9 @@ class SubscriptionService:
             - Active PRO: sem limite
             - Trial expirado / cancelado: não pode adicionar
         """
+
+        if not subscription:
+            return False, "Sem subscrição ativa. Por favor, cria uma subscrição para poderes adicionar clientes."
 
         if subscription.status == SubscriptionStatus.TRIAL_EXPIRED:
             return False, (
@@ -137,13 +141,12 @@ class SubscriptionService:
         para garantir consistência mesmo se houver operações concorrentes.
         """
         #Conta clientes activos
-        active_count = session.exec(
-            select(Client).where(
+        count = session.exec(
+            select(func.count()).select_from(Client).where(
                 Client.owner_trainer_id == trainer_user_id,
                 Client.archived_at.is_(None)
             )
-        ).all()
-        count= len(active_count)
+        ).one()
 
         #Busca subscrição do trainer
         subscription = session.exec(
@@ -168,7 +171,6 @@ class SubscriptionService:
                 StripeService.update_subscription_price(subscription.stripe_subscription_id, new_price_id)
             except Exception:
                 # Não bloqueia a operação se o Stripe falhar — o webhook irá sincronizar
-                # Em produção, aqui vai um log de erro + alerta
                 pass
 
         #Actualiza contagem e tier na BD

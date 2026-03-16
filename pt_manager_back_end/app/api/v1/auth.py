@@ -3,6 +3,7 @@ Router de autenticação — endpoints de login e gestão de utilizadores.
 
 Estrutura dos endpoints:
     POST /auth/login                    — login público (não requer token)
+    POST /auth/logout                   — logout (requer token, invalida o token atual)
     POST /auth/users                    — criar utilizador (apenas trainers)
     GET  /auth/users                    — listar utilizadores (apenas trainers)
     GET  /auth/users/me                 — ver o próprio perfil (qualquer utilizador autenticado)
@@ -10,10 +11,11 @@ Estrutura dos endpoints:
     POST /auth/users/me/change-password — alterar própria password
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from app.api.deps import db_session
+from app.core.config import settings
 from app.core.security import (
     get_current_user,
     require_trainer,
@@ -23,6 +25,7 @@ from app.core.security import (
 )
 from app.db.models.user import User
 from app.db.models.client import Client
+from app.db.models.active_token import ActiveToken
 from app.schemas.auth import (
     LoginIn,
     TokenOut,
@@ -60,20 +63,70 @@ async def login(payload: LoginIn, session: Session = Depends(db_session)) -> Tok
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Conta inativa. Entra em contacto com o suporte.")
 
-    # Criar token JWT com role, user_id e nome completo
-    token_data = create_access_token(
+    # Cria JWT
+    expire_delta = timedelta(minutes=settings.access_token_expire_minutes)
+    token_str = create_access_token(
         subject=user.id,
         role=user.role,
         full_name=user.full_name,
+        expires_delta=expire_delta,
     )
-    
+ 
+    # Persistir o token na base de dados para permitir logout e controlo de sessões ativas.
+    existing = session.exec(
+        select(ActiveToken).where(ActiveToken.user_id == user.id)
+    ).first()
 
-    return TokenOut(        
-        access_token=token_data, 
-        role=user.role, 
-        user_id=user.id, 
+    if existing:
+        session.delete(existing)
+        session.flush()  
+ 
+    expires_at = datetime.now(timezone.utc) + expire_delta
+    active_token = ActiveToken(
+        user_id=user.id,
+        token=token_str,
+        expires_at=expires_at,
+    )
+    session.add(active_token)
+    try:
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Erro ao persistir token de sessão.") from e
+ 
+    return TokenOut(
+        access_token=token_str,
+        role=user.role,
+        user_id=user.id,
         full_name=user.full_name,
     )
+
+#------------------------------
+# Endpoint de logout - invalida o token atual
+#------------------------------
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(
+    session: Session = Depends(db_session),
+    current_user = Depends(get_current_user),
+) -> dict:
+    # Invalida o token atual do utilizador, removendo-o da base de dados.
+    # O token é enviado no header Authorization
+
+    active_token = session.exec(
+        select(ActiveToken)
+        .where(ActiveToken.user_id == current_user.id)
+    ).first()
+
+    if active_token:
+        session.delete(active_token)
+        try:
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(status_code=500, detail="Erro ao invalidar token de sessão.") from e
+        
+    return {"detail": "Logout bem-sucedido"}
 
 #------------------------------
 #Gestão de utilizadores - apenas trainers podem criar e listar utilizadores

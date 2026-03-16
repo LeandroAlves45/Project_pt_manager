@@ -11,7 +11,6 @@ Arquitectura de isolamento de erros:
 """
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 import logging
 
 from app.db.session import get_session
@@ -124,6 +123,43 @@ def dispatch_job():
 
         session.commit()
         logger.info(f"[SCHEDULER] ✅ Dispatch concluído. {len(notifications)} processada(s).")
+
+# ---------------------------------------------------------------
+# Limpeza periódica de tokens expirados — para manter a tabela active_tokens enxuta
+# ---------------------------------------------------------------
+ 
+def token_cleanup_job():
+    """
+    Exclui as linhas expiradas de active_tokens.
+
+    Esta é uma limpeza adicional — os tokens já são invalidados
+    ao fazer logout, excluindo a linha. Esta tarefa captura tokens que expiraram
+    naturalmente (o usuário nunca fez logout explicitamente) para manter a tabela enxuta.
+    """
+    from datetime import timezone
+    from datetime import datetime
+    from sqlmodel import select
+    from app.db.models.active_token import ActiveToken
+ 
+    logger.info("[SCHEDULER] Token cleanup started")
+ 
+    with next(get_session()) as session:
+        now = datetime.now(timezone.utc)
+        try:
+            # Apagar tokens expirados
+            expired = session.exec(
+                select(ActiveToken).where(ActiveToken.expires_at < now)
+            ).all()
+ 
+            count = len(expired)
+            for token in expired:
+                session.delete(token)
+ 
+            session.commit()
+            logger.info(f"[SCHEDULER] Limpeza de tokens concluída — {count} token(s) expirado(s) removido(s).")
+        except Exception as e:
+            session.rollback()
+            logger.error(f"[SCHEDULER] Falha na limpeza de tokens: {e}")
 
 def start_scheduler():
     """

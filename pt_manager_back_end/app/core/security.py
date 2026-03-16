@@ -21,10 +21,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import Header, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.core.config import settings
 from app.api.deps import db_session
@@ -47,7 +47,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # JWT
 #--------------------------------------------
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+bearer_scheme = HTTPBearer()
 ALGORITHM = "HS256"
 
 def create_access_token(
@@ -84,7 +84,8 @@ def create_access_token(
 # Dependencies de segurança
 #--------------------------------------------
 
-async def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(db_session)):
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme), session: Session = Depends(db_session)):
+    token = credentials.credentials
     """
     Valida o JWT Bearer token e devolve o utilizador autenticado da base de dados.
  
@@ -101,6 +102,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: Session
     """
 
     from app.db.models.user import User
+    from app.db.models.active_token import ActiveToken
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token de autenticação inválido ou expirado.",
@@ -115,6 +118,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: Session
     except JWTError:
         raise credentials_exception
     
+    # Verifica se o token está activo na tabela active_tokens — logout remove o token daqui, invalidando-o imediatamente
+    active_token = session.exec(
+        select(ActiveToken)
+        .where(ActiveToken.user_id == user_id)
+        .where(ActiveToken.token == token)
+    ).first()
+
+    if not active_token:
+        raise credentials_exception
+    
+    # Busca o utilizador na DB para garantir que ainda existe e está activo
     user = session.get(User, user_id)
     if user is None or not user.is_active:
         raise credentials_exception

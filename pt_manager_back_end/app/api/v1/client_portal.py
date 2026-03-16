@@ -29,6 +29,9 @@ from app.db.models.training import (
     ClientActivePlan,
     Exercise,
 )
+from app.db.models.client_supplement import ClientSupplement
+from app.db.models.supplement import Supplement
+from app.schemas.client_supplement import ClientSupplementPublic
 from app.db.models.checkin import CheckIn
 from app.schemas.checkin import CheckInResponse, CheckInRead
 import app.crud.nutrition as nutrition_crud
@@ -294,3 +297,49 @@ async def respond_to_check_in(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao responder ao check-in: {e}")
+    
+# ==================================================
+# GET /portal/my-supplements  
+# ==================================================
+
+@router.get("/my-supplements", response_model=List[ClientSupplementPublic])
+async def get_my_supplements(
+    session: Session = Depends(db_session),
+    current_user = Depends(require_client),
+) -> List[ClientSupplementPublic]:
+    # Devolve a lista de suplementos atribuídos ao cliente autenticado, com detalhes do suplemento do catálogo.
+    # Usa o schema ClientSupplementPublic para omitir as notas específicas do Personal Trainer.
+
+    try:
+        client_id = _get_client_id(current_user)
+
+        assignments = session.exec(
+            select(ClientSupplement)
+            .where(ClientSupplement.client_id == client_id)
+        ).all()
+
+        supplements_public = []
+        for assignment in assignments:
+            supplement = session.get(Supplement, assignment.supplement_id)
+            if not supplement or supplement.archived_at is not None:
+                # Suplemento arquivado ou removido - omite da lista do cliente
+                continue
+
+
+            supplements_public.append(ClientSupplementPublic(
+                id=assignment.id,
+                supplement_id=assignment.supplement_id,
+                dose=assignment.dose,
+                timing_notes=assignment.timing_notes,
+                notes=assignment.notes,
+                assigned_at=assignment.assigned_at,
+                supplement_name=supplement.name,
+                supplement_description=supplement.description,
+                supplement_serving_size=supplement.serving_size,
+                supplement_timing=supplement.timing,
+            ))
+
+        return supplements_public
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao obter suplementos: {e}")

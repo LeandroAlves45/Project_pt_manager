@@ -20,17 +20,16 @@ router = APIRouter(prefix="/clients", tags=["Clients"])
 #------------------------------
 
 def _client_status(client):
-    """
-    Determina status sem depender do tipo de archived_at
-    Se existir qualquer valor -> archived, senao active.
-    """
+    # Determina status sem depender do tipo de archived_at
+    # Se existir qualquer valor -> archived, senao active.
+    
 
     return "archived" if client.archived_at else "active"
 
 def _to_client_read(c: Client) -> ClientRead:
-    """
-    Converte model DB -> DTO de resposta.
-    """
+
+    # Converte model DB -> DTO de resposta.
+  
     return ClientRead(
         id=c.id,
         full_name=c.full_name,
@@ -40,6 +39,8 @@ def _to_client_read(c: Client) -> ClientRead:
         sex=c.sex,
         height_cm=c.height_cm,
         objetive=getattr(c, "objetive", None),
+        training_modality=getattr(c, "training_modality", "presencial"),
+        next_assessment_date=getattr(c, "next_assessment_date", None),
         notes=c.notes,
         emergency_contact_name=getattr(c, "emergency_contact_name", None),
         emergency_contact_phone=getattr(c, "emergency_contact_phone", None),
@@ -49,10 +50,10 @@ def _to_client_read(c: Client) -> ClientRead:
     )
 
 def _build_client_with_pack(client: Client, session: Session) -> ClientReadWithPack:
-    """
-    Constrói ClientReadWithPack a partir do client e sessão DB.
-    Busca o pack ativo e inclui info relevante.
-    """
+
+    # Constrói ClientReadWithPack a partir do client e sessão DB.
+    # Busca o pack ativo e inclui info relevante.
+
 
     active = PackService.get_active_pack(session, client_id=client.id)
 
@@ -77,11 +78,11 @@ def _build_client_with_pack(client: Client, session: Session) -> ClientReadWithP
     return ClientReadWithPack(**base_data, active_pack=active_pack_info)
 
 def _get_trainer_id_filter(current_user) -> Optional[str]:
-    """
-    Retorna o trainer_id para filtrar clientes, ou None se não houver filtro.
-    Se o user for trainer, retorna seu próprio ID para filtrar apenas seus clientes.
-    Se for superuser, retorna None para não filtrar (ver todos os clientes).
-    """
+    
+    # Retorna o trainer_id para filtrar clientes, ou None se não houver filtro.
+    # Se o user for trainer, retorna seu próprio ID para filtrar apenas seus clientes.
+    # Se for superuser, retorna None para não filtrar (ver todos os clientes).
+   
     if current_user.role == "superuser":
         return None
     return current_user.id
@@ -95,11 +96,10 @@ async def get_my_client_profile(
     session: Session = Depends(db_session),
     current_user = Depends(get_current_user), #qualquer utilizador autenticado pode aceder ao seu perfil
 ) -> ClientReadWithPack:
-    """
-    Endpoint para o cliente autenticado ver o seu próprio perfil, incluindo info do pack ativo.
+  
+    # Endpoint para o cliente autenticado ver o seu próprio perfil, incluindo info do pack ativo.
+    # Colocação de "me" no path é uma prática comum para endpoints relacionados ao próprio usuário, evitando confusão com endpoints de administração ou listagem geral.
 
-    Colocação de "me" no path é uma prática comum para endpoints relacionados ao próprio usuário, evitando confusão com endpoints de administração ou listagem geral.
-    """
     if current_user.role != "client" or not current_user.client_id:
         raise HTTPException(status_code=403, detail="Acesso negado. Este endpoint é apenas para clientes autenticados.")
     
@@ -187,11 +187,12 @@ async def create_client(
     # Pode adicionar clientes (limite de tier)
     # Unicidade do telemóvel e email
 
-    #Verifica se o trainer pode adicionar mais clientes
-    subscription = SubscriptionService.get_subscription(session, current_user.id)
-    can_add, error_msg = SubscriptionService.can_add_client(subscription)
-    if not can_add:
-        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=error_msg)
+    #Verifica se o trainer pode adicionar mais clientes (superusers e isentos ignoram o limite)
+    if current_user.role != "superuser" and not getattr(current_user, "is_exempt_from_billing", False):
+        subscription = SubscriptionService.get_subscription(session, current_user.id)
+        can_add, error_msg = SubscriptionService.can_add_client(subscription)
+        if not can_add:
+            raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=error_msg)
     
 
     try:
@@ -331,11 +332,12 @@ async def unarchive_client(
             raise HTTPException(status_code=403, detail="Sem permissão.")
         
         if client.archived_at is not None:
-            #Verifica se o trainer pode adicionar mais clientes antes de reativar
-            subscription = SubscriptionService.get_subscription(session, current_user.id)
-            can_add, error_msg = SubscriptionService.can_add_client(subscription)
-            if not can_add:
-                raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=error_msg)
+            #Verifica se o trainer pode adicionar mais clientes antes de reativar (superusers e isentos ignoram o limite)
+            if current_user.role != "superuser" and not getattr(current_user, "is_exempt_from_billing", False):
+                subscription = SubscriptionService.get_subscription(session, current_user.id)
+                can_add, error_msg = SubscriptionService.can_add_client(subscription)
+                if not can_add:
+                    raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=error_msg)
         
             client.archived_at = None
             session.add(client)

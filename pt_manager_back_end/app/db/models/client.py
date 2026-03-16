@@ -30,6 +30,8 @@ class Client(SQLModel, table=True):
     training_modality: str = Field(default="presencial", max_length=20) #presencial, online ou híbrido
     next_assessment_date: Optional[date] = Field(default=None) #data da próxima avaliação física
 
+    owner_trainer_id: Optional[str] = Field(default=None, foreign_key="users.id", index=True)
+
     emergency_contact_name: Optional[str] = Field(default=None)
     emergency_contact_phone: Optional[str] = Field(default=None)
 

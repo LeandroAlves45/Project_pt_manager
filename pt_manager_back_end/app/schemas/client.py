@@ -39,8 +39,15 @@ class ClientCreate(SQLModel):
 
     height_cm: Optional[int] = Field(default=None, ge=80, le=260)
     objetive: Optional[str] = Field(default=None, max_length=500)
-    #definir se o cliente treina presencial, online ou híbrido
-    training_modality: str = Field(default="presencial", max_length=20) #presencial, online ou híbrido
+    #definir se o cliente treina presencial ou online
+    training_modality: str = Field(default="presencial", max_length=20)
+    @field_validator('training_modality')
+    @classmethod
+    def validate_training_modality(cls, v: str) -> str:
+        allowed = {"presencial", "online"}
+        if v not in allowed:
+            raise ValueError(f"training_modality deve ser: {', '.join(sorted(allowed))}")
+        return v
     notes: Optional[str] = None
     
 
@@ -63,6 +70,15 @@ class ClientUpdate(SQLModel):
     height_cm: Optional[int] = Field(default=None, ge=80, le=260)
     objetive: Optional[str] = Field(default=None, max_length=500)
     training_modality: Optional[str] = None
+    @field_validator('training_modality')
+    @classmethod
+    def validate_training_modality(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        allowed = {"presencial", "online"}
+        if v not in allowed:
+            raise ValueError(f"training_modality deve ser: {', '.join(sorted(allowed))}")
+        return v
 
     #data da próxima avaliação física
     next_assessment_date: Optional[date] = None
@@ -88,7 +104,7 @@ class ClientRead(SQLModel):
     height_cm: Optional[int]
     objetive: Optional[str] = None
     training_modality: str
-    next_assessment_date: Optional[date]
+    next_assessment_date: Optional[date] = None
     notes: Optional[str] = None
     emergency_contact_name: Optional[str] = None
     emergency_contact_phone: Optional[str] = None

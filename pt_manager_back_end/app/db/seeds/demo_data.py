@@ -27,12 +27,11 @@ Apenas activa se a variável SEED_DEMO_DATA=true estiver definida.
 Isto evita criar dados de teste em produção real por acidente.
 """
 
-import os
 import logging
 from datetime import date
 from sqlmodel import Session, select
 from sqlalchemy import text
- 
+
 from app.db.models.user import User
 from app.db.models.client import Client
 from app.db.models.trainer_subscription import (
@@ -40,37 +39,29 @@ from app.db.models.trainer_subscription import (
 )
 from app.db.models.checkin import CheckIn
 from app.core.security import hash_password
- 
-logger = logging.getLogger(__name__)
- 
-# Credencias por defeito — podem ser sobrescritas por variáveis de ambiente
-DEFAULT_TRAINER_EMAIL = "trainer@demo.pt"
-DEFAULT_TRAINER_PASSWORD = "Trainer123!"
-DEFAULT_TRAINER_NAME = "Trainer Demo"
+from app.core.config import settings
 
-DEFAULT_CLIENT_EMAIL = "cliente@demo.pt"
-DEFAULT_CLIENT_PASSWORD = "Cliente123!"
-DEFAULT_CLIENT_NAME = "Cliente Demo"
+logger = logging.getLogger(__name__)
 
 def seed_demo_data(session: Session) -> None:
     """
     Cria o trainer e cliente de demonstração se ainda não existirem.
- 
+
     Só corre se SEED_DEMO_DATA=true estiver nas variáveis de ambiente.
     """
 
-    # Guarda de segurança — não cria dados de deemo sem configuração explícita
-    if os.getenv("SEED_DEMO_DATA", "false").lower() != "true":
+    # Guarda de segurança — não cria dados de demo sem configuração explícita
+    if not settings.seed_demo_data:
         logger.info("SEED_DEMO_DATA não está definido como 'true'. Saltando seed de demonstração.")
         return
-    
-    trainer_email = os.getenv("DEMO_TRAINER_EMAIL", DEFAULT_TRAINER_EMAIL)
-    trainer_pass = os.getenv("DEMO_TRAINER_PASSWORD", DEFAULT_TRAINER_PASSWORD)
-    trainer_name = os.getenv("DEMO_TRAINER_NAME", DEFAULT_TRAINER_NAME)
 
-    client_email = os.getenv("DEMO_CLIENT_EMAIL", DEFAULT_CLIENT_EMAIL)
-    client_pass = os.getenv("DEMO_CLIENT_PASSWORD", DEFAULT_CLIENT_PASSWORD)
-    client_name = os.getenv("DEMO_CLIENT_NAME", DEFAULT_CLIENT_NAME)
+    trainer_email = settings.demo_trainer_email
+    trainer_pass = settings.demo_trainer_password
+    trainer_name = settings.demo_trainer_name
+
+    client_email = settings.demo_client_email
+    client_pass = settings.demo_client_password
+    client_name = settings.demo_client_name
 
     # Verifica se já existem — se qualuqer um dos dois já existir, não cria nenhum
     existing_trainer = session.exec(select(User).where(User.email == trainer_email)).first()

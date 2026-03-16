@@ -79,4 +79,18 @@ class Settings(BaseSettings):
     # Configurações de CORS
     cors_origins: str = "http://localhost:3000, http://localhost:5173"  # Pode ser uma lista separada por vírgulas
 
+    # Superuser seed
+    superuser_email: str = ""
+    superuser_password: str = ""
+    superuser_name: str = "Admin"
+
+    # Demo data seed
+    seed_demo_data: bool = False
+    demo_trainer_email: str = "trainer@demo.pt"
+    demo_trainer_password: str = "Trainer123!"
+    demo_trainer_name: str = "Trainer Demo"
+    demo_client_email: str = "cliente@demo.pt"
+    demo_client_password: str = "Cliente123!"
+    demo_client_name: str = "Cliente Demo"
+
 settings = Settings()

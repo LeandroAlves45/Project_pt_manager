@@ -18,24 +18,23 @@ import logging
 from sqlmodel import Session, select
 from app.db.models.user import User
 from app.core.security import hash_password
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 def seed_superuser(session: Session) -> None:
     """
     Cria o utilizador superuser se ainda não existir.
- 
+
     Chamado em on_startup() no main.py, depois de run_migrations().
     Usa o email como identificador único — se já existir um utilizador
     com esse email, não faz nada (mesmo que o role seja diferente).
     """
 
-    import os
-
-    # Lê as credenciais das variáveis de ambiente
-    email = os.getenv("SUPERUSER_EMAIL")
-    password = os.getenv("SUPERUSER_PASSWORD")
-    name = os.getenv("SUPERUSER_NAME", "Admin")
+    # Lê as credenciais do settings (pydantic-settings lê o .env correctamente)
+    email = settings.superuser_email
+    password = settings.superuser_password
+    name = settings.superuser_name
 
     # Se as variáveis não estiverem definidas , ignora a seed
     if not email or not password:

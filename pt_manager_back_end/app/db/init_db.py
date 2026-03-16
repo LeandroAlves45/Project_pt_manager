@@ -12,7 +12,10 @@ from app.db.session import engine
 from app.db.migrate import run_migrations
 
 # Modelos de utilizadores e autenticação
-from app.db.models.user import User                                         
+from app.db.models.user import User 
+from app.db.models.active_token import ActiveToken 
+
+# Modelos de clientes r subscrições
 from app.db.models.client import Client                                      
 from app.db.models.trainer_subscription import TrainerSubscription
 from app.db.models.trainer_settings import TrainerSettings    
@@ -38,6 +41,7 @@ from app.db.models.checkin import CheckIn
 # Modelos de nutrição e suplementos
 from app.db.models.nutrition import Food, MealPlan, MealPlanMeal, MealPlanItem  
 from app.db.models.supplement import Supplement
+from app.db.models.client_supplement import ClientSupplement 
 
 # Modelos de notificações
 from app.db.models.notification import Notification
