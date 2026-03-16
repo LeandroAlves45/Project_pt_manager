@@ -28,6 +28,7 @@ from app.db.init_db import init_db
 from app.db.session import engine
 from app.db.seeds.pack_types import seed_pack_types
 from app.db.seeds.superuser import seed_superuser
+from app.db.seeds.demo_data import seed_demo_data
 
 from sqlmodel import Session
 
@@ -110,6 +111,7 @@ def on_startup() -> None:
     with Session(engine) as session:
         seed_pack_types(session)
         seed_superuser(session)
+        seed_demo_data(session)
 
     start_scheduler()
 
