@@ -1,0 +1,29 @@
+# PT Manager - Back-End API 🏋️‍♂️
+
+A robust and scalable RESTful API designed to manage Personal Trainer clients, workouts, and schedules. Built with a focus on **Clean Architecture**, security, and performance.
+
+## 🚀 Technologies
+- **Python 3.10+**
+- **FastAPI**: High-performance web framework.
+- **PostgreSQL**: Primary relational database.
+- **SQLAlchemy & Alembic**: ORM and database migrations.
+- **Docker**: Containerization for consistent development and deployment.
+- **JWT & Passlib**: Secure authentication and password hashing.
+
+## 🛠️ Key Features
+- **Role-Based Access Control (RBAC)**: Distinct permissions for Trainers and Clients.
+- **JWT Authentication**: Secure stateless session management.
+- **Modular Architecture**: Easy to maintain and scale.
+- **Automated Migrations**: Database schema versioning with Alembic.
+- **API Documentation**: Fully documented with Swagger (OpenAPI).
+
+## 📦 Installation & Setup
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/LeandroAlves45/Project_pt_manager.git](https://github.com/LeandroAlves45/Project_pt_manager.git)
+2. Create the .env file based on the .env.example file and fill in your credentials.
+3. Run with Docker:
+   ```bash
+    docker-compose up --build
+4. Access documentation at http://localhost:8000/docs.
+
