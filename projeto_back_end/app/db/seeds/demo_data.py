@@ -63,11 +63,12 @@ def seed_demo_data(session: Session) -> None:
     client_pass = settings.demo_client_password
     client_name = settings.demo_client_name
 
-    # Verifica se já existem — se qualuqer um dos dois já existir, não cria nenhum
+    # Verifica se já existem — se qualquer um dos registos já existir, não cria nenhum
     existing_trainer = session.exec(select(User).where(User.email == trainer_email)).first()
     existing_client = session.exec(select(User).where(User.email == client_email)).first()
+    existing_client_record = session.exec(select(Client).where(Client.email == client_email)).first()
 
-    if existing_trainer or existing_client:
+    if existing_trainer or existing_client or existing_client_record:
         logger.info("Trainer ou cliente de demonstração já existe. Saltando criação.")
         return
     

@@ -8287,3 +8287,72 @@ DETAIL:  Failing row contains (2a1d0161-cdf3-49bf-8203-8a3f9d219037, string, dfd
 2026-03-16 22:13:57 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
 2026-03-16 22:13:57 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
 2026-03-16 22:13:57 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
+2026-03-17 22:46:21 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-17 22:46:21 | INFO     | app.db.seeds.demo_data | [SEED DEMO] _A criar dados de demonstração...
+2026-03-17 22:46:21 | DEBUG    | passlib.handlers.bcrypt | detected 'bcrypt' backend, version '4.0.1'
+2026-03-17 22:46:21 | DEBUG    | passlib.handlers.bcrypt | 'bcrypt' backend lacks $2$ support, enabling workaround
+2026-03-17 22:46:21 | ERROR    | app.db.seeds.demo_data | [SEED DEMO] Erro ao criar dados de demonstração: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_clients_phone"
+DETAIL:  Key (phone)=(910710373) already exists.
+
+[SQL: INSERT INTO clients (id, full_name, phone, email, birth_date, sex, height_cm, objetive, notes, training_modality, next_assessment_date, owner_trainer_id, emergency_contact_name, emergency_contact_phone, archived_at, created_at, updated_at) VALUES (%(id)s, %(full_name)s, %(phone)s, %(email)s, %(birth_date)s, %(sex)s, %(height_cm)s, %(objetive)s, %(notes)s, %(training_modality)s, %(next_assessment_date)s, %(owner_trainer_id)s, %(emergency_contact_name)s, %(emergency_contact_phone)s, %(archived_at)s, %(created_at)s, %(updated_at)s)]
+[parameters: {'id': '21594297-2ee6-48ac-844b-13a71b6d8076', 'full_name': 'Cliente Demo', 'phone': '910710373', 'email': 'cliente@demo.pt', 'birth_date': datetime.date(1990, 1, 1), 'sex': 'F', 'height_cm': 165, 'objetive': 'Perder massa gorda e tonificar', 'notes': 'Cliente demo criado para fins de teste. Não é um cliente real.', 'training_modality': 'presencial', 'next_assessment_date': None, 'owner_trainer_id': None, 'emergency_contact_name': None, 'emergency_contact_phone': None, 'archived_at': None, 'created_at': datetime.date(2026, 3, 17), 'updated_at': datetime.date(2026, 3, 17)}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-03-17 22:47:11 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-17 22:47:11 | INFO     | app.db.seeds.demo_data | [SEED DEMO] _A criar dados de demonstração...
+2026-03-17 22:47:11 | DEBUG    | passlib.handlers.bcrypt | detected 'bcrypt' backend, version '4.0.1'
+2026-03-17 22:47:11 | DEBUG    | passlib.handlers.bcrypt | 'bcrypt' backend lacks $2$ support, enabling workaround
+2026-03-17 22:47:12 | ERROR    | app.db.seeds.demo_data | [SEED DEMO] Erro ao criar dados de demonstração: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_clients_phone"
+DETAIL:  Key (phone)=(910710373) already exists.
+
+[SQL: INSERT INTO clients (id, full_name, phone, email, birth_date, sex, height_cm, objetive, notes, training_modality, next_assessment_date, owner_trainer_id, emergency_contact_name, emergency_contact_phone, archived_at, created_at, updated_at) VALUES (%(id)s, %(full_name)s, %(phone)s, %(email)s, %(birth_date)s, %(sex)s, %(height_cm)s, %(objetive)s, %(notes)s, %(training_modality)s, %(next_assessment_date)s, %(owner_trainer_id)s, %(emergency_contact_name)s, %(emergency_contact_phone)s, %(archived_at)s, %(created_at)s, %(updated_at)s)]
+[parameters: {'id': '0c571288-5f1f-4f38-b6ed-42ee119390c6', 'full_name': 'Cliente Demo', 'phone': '910710373', 'email': 'cliente@demo.pt', 'birth_date': datetime.date(1990, 1, 1), 'sex': 'F', 'height_cm': 165, 'objetive': 'Perder massa gorda e tonificar', 'notes': 'Cliente demo criado para fins de teste. Não é um cliente real.', 'training_modality': 'presencial', 'next_assessment_date': None, 'owner_trainer_id': None, 'emergency_contact_name': None, 'emergency_contact_phone': None, 'archived_at': None, 'created_at': datetime.date(2026, 3, 17), 'updated_at': datetime.date(2026, 3, 17)}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-03-17 22:47:28 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-17 22:47:28 | INFO     | app.db.seeds.demo_data | [SEED DEMO] _A criar dados de demonstração...
+2026-03-17 22:47:28 | DEBUG    | passlib.handlers.bcrypt | detected 'bcrypt' backend, version '4.0.1'
+2026-03-17 22:47:28 | DEBUG    | passlib.handlers.bcrypt | 'bcrypt' backend lacks $2$ support, enabling workaround
+2026-03-17 22:47:29 | ERROR    | app.db.seeds.demo_data | [SEED DEMO] Erro ao criar dados de demonstração: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_clients_phone"
+DETAIL:  Key (phone)=(910710373) already exists.
+
+[SQL: INSERT INTO clients (id, full_name, phone, email, birth_date, sex, height_cm, objetive, notes, training_modality, next_assessment_date, owner_trainer_id, emergency_contact_name, emergency_contact_phone, archived_at, created_at, updated_at) VALUES (%(id)s, %(full_name)s, %(phone)s, %(email)s, %(birth_date)s, %(sex)s, %(height_cm)s, %(objetive)s, %(notes)s, %(training_modality)s, %(next_assessment_date)s, %(owner_trainer_id)s, %(emergency_contact_name)s, %(emergency_contact_phone)s, %(archived_at)s, %(created_at)s, %(updated_at)s)]
+[parameters: {'id': '56d6cc8c-c2ef-4146-bc2c-20188fbb8da6', 'full_name': 'Cliente Demo', 'phone': '910710373', 'email': 'cliente@demo.pt', 'birth_date': datetime.date(1990, 1, 1), 'sex': 'F', 'height_cm': 165, 'objetive': 'Perder massa gorda e tonificar', 'notes': 'Cliente demo criado para fins de teste. Não é um cliente real.', 'training_modality': 'presencial', 'next_assessment_date': None, 'owner_trainer_id': None, 'emergency_contact_name': None, 'emergency_contact_phone': None, 'archived_at': None, 'created_at': datetime.date(2026, 3, 17), 'updated_at': datetime.date(2026, 3, 17)}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-03-17 23:20:41 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-17 23:20:41 | INFO     | app.db.seeds.demo_data | [SEED DEMO] _A criar dados de demonstração...
+2026-03-17 23:20:41 | DEBUG    | passlib.handlers.bcrypt | detected 'bcrypt' backend, version '4.0.1'
+2026-03-17 23:20:41 | DEBUG    | passlib.handlers.bcrypt | 'bcrypt' backend lacks $2$ support, enabling workaround
+2026-03-17 23:20:41 | ERROR    | app.db.seeds.demo_data | [SEED DEMO] Erro ao criar dados de demonstração: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_clients_phone"
+DETAIL:  Key (phone)=(910710373) already exists.
+
+[SQL: INSERT INTO clients (id, full_name, phone, email, birth_date, sex, height_cm, objetive, notes, training_modality, next_assessment_date, owner_trainer_id, emergency_contact_name, emergency_contact_phone, archived_at, created_at, updated_at) VALUES (%(id)s, %(full_name)s, %(phone)s, %(email)s, %(birth_date)s, %(sex)s, %(height_cm)s, %(objetive)s, %(notes)s, %(training_modality)s, %(next_assessment_date)s, %(owner_trainer_id)s, %(emergency_contact_name)s, %(emergency_contact_phone)s, %(archived_at)s, %(created_at)s, %(updated_at)s)]
+[parameters: {'id': 'a424d0c4-e88b-4364-a384-336d79227223', 'full_name': 'Cliente Demo', 'phone': '910710373', 'email': 'cliente@demo.pt', 'birth_date': datetime.date(1990, 1, 1), 'sex': 'F', 'height_cm': 165, 'objetive': 'Perder massa gorda e tonificar', 'notes': 'Cliente demo criado para fins de teste. Não é um cliente real.', 'training_modality': 'presencial', 'next_assessment_date': None, 'owner_trainer_id': None, 'emergency_contact_name': None, 'emergency_contact_phone': None, 'archived_at': None, 'created_at': datetime.date(2026, 3, 17), 'updated_at': datetime.date(2026, 3, 17)}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-03-17 23:28:35 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-17 23:28:35 | INFO     | app.db.seeds.demo_data | [SEED DEMO] _A criar dados de demonstração...
+2026-03-17 23:28:35 | DEBUG    | passlib.handlers.bcrypt | detected 'bcrypt' backend, version '4.0.1'
+2026-03-17 23:28:35 | DEBUG    | passlib.handlers.bcrypt | 'bcrypt' backend lacks $2$ support, enabling workaround
+2026-03-17 23:28:35 | ERROR    | app.db.seeds.demo_data | [SEED DEMO] Erro ao criar dados de demonstração: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "uq_clients_phone"
+DETAIL:  Key (phone)=(910710373) already exists.
+
+[SQL: INSERT INTO clients (id, full_name, phone, email, birth_date, sex, height_cm, objetive, notes, training_modality, next_assessment_date, owner_trainer_id, emergency_contact_name, emergency_contact_phone, archived_at, created_at, updated_at) VALUES (%(id)s, %(full_name)s, %(phone)s, %(email)s, %(birth_date)s, %(sex)s, %(height_cm)s, %(objetive)s, %(notes)s, %(training_modality)s, %(next_assessment_date)s, %(owner_trainer_id)s, %(emergency_contact_name)s, %(emergency_contact_phone)s, %(archived_at)s, %(created_at)s, %(updated_at)s)]
+[parameters: {'id': '52ee192e-10d9-4792-8e78-dd4c484d88fa', 'full_name': 'Cliente Demo', 'phone': '910710373', 'email': 'cliente@demo.pt', 'birth_date': datetime.date(1990, 1, 1), 'sex': 'F', 'height_cm': 165, 'objetive': 'Perder massa gorda e tonificar', 'notes': 'Cliente demo criado para fins de teste. Não é um cliente real.', 'training_modality': 'presencial', 'next_assessment_date': None, 'owner_trainer_id': None, 'emergency_contact_name': None, 'emergency_contact_phone': None, 'archived_at': None, 'created_at': datetime.date(2026, 3, 17), 'updated_at': datetime.date(2026, 3, 17)}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2026-03-17 23:30:26 | INFO     | app.db.seeds.superuser | [SEED] Superuser com email 'ptleoalves@gmail.com' já existe. Ignorando criação.
+2026-03-17 23:30:26 | INFO     | app.db.seeds.demo_data | [SEED DEMO] _A criar dados de demonstração...
+2026-03-17 23:30:26 | DEBUG    | passlib.handlers.bcrypt | detected 'bcrypt' backend, version '4.0.1'
+2026-03-17 23:30:26 | DEBUG    | passlib.handlers.bcrypt | 'bcrypt' backend lacks $2$ support, enabling workaround
+2026-03-17 23:30:26 | INFO     | app.db.seeds.demo_data | [SEED DEMO] Trainer criado: trainer@demo.pt / Trainer123!
+2026-03-17 23:30:26 | INFO     | app.db.seeds.demo_data | [SEED DEMO] Cliente criado: cliente@demo.pt / Cliente123!
+2026-03-17 23:30:26 | INFO     | app.db.seeds.demo_data | [SEED DEMO] Dados de demonstração criados com sucesso.
+2026-03-17 23:30:26 | INFO     | app.scheduler | [SCHEDULER] Iniciando scheduler de notificações
+2026-03-17 23:30:26 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-17 23:30:26 | INFO     | apscheduler.scheduler | Added job "dispatch_job" to job store "default"
+2026-03-17 23:30:26 | INFO     | apscheduler.scheduler | Scheduler started
+2026-03-17 23:30:26 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-17 23:30:26 | INFO     | app.scheduler | [SCHEDULER] Scheduler iniciado com sucesso
+2026-03-17 23:30:26 | DEBUG    | apscheduler.scheduler | Next wakeup is due at 2026-03-17 23:31:26.621617+00:00 (in 59.996402 seconds)
+2026-03-17 23:30:42 | INFO     | app.scheduler | [SCHEDULER] Desligando scheduler de notificações
+2026-03-17 23:30:42 | INFO     | apscheduler.scheduler | Scheduler has been shut down
+2026-03-17 23:30:42 | DEBUG    | apscheduler.scheduler | Looking for jobs to run
+2026-03-17 23:30:42 | DEBUG    | apscheduler.scheduler | No jobs; waiting until a job is added
+2026-03-17 23:30:42 | INFO     | app.scheduler | [SCHEDULER] Scheduler desligado
