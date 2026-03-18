@@ -58,6 +58,7 @@ from app.api.v1.admin import router as admin_router
 from app.api.v1.trainer_profile import router as trainer_profile_router
 from app.api.v1.client_portal import router as client_portal_router
 from app.api.v1.client_supplements import router as client_supplements_router
+from app.api.v1.invite import router as invite_router
 
 from app.scheduler import start_scheduler, shutdown_scheduler
 
@@ -183,6 +184,10 @@ app.include_router(webhooks_router, prefix="/api/v1")
 
 # Health check: público para monitorização externa (ex: Railway, UptimeRobot)
 app.include_router(health_router, prefix="/api/v1")
+
+# Invite: os endpoints de convite
+app.include_router(invite_router, prefix="/api/v1")
+
 
 # ---------------------------------------------------------------------------
 # Rotas PROTEGIDAS por JWT

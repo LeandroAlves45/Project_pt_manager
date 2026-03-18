@@ -70,7 +70,7 @@ class EmailService:
 
             template_path = EmailService.load_email_template()
 
-             # Substituir variáveis usando .format()
+            
             html = template_path.format(
             client_name=client_name,
             session_date=session_date,
@@ -153,6 +153,36 @@ class EmailService:
 
         except Exception as e:
             logger.error(f"[EMAIL] ❌ Erro ao enviar email para {to_email}: {e}")
+            raise ValueError(f"Erro ao enviar email: {e}")
+        
+    
+    @staticmethod
+    def send_plain_email(
+        *,
+        to_email: str,
+        subject: str,
+        body: str
+    ) -> None:
+        """
+        Envia um email de texto simples com corpo pre-construido.
+ 
+        Usado pelo scheduler para notificacoes do trainer onde o corpo completo
+        ja esta armazenado no campo message da notificacao.
+        Evita duplicar a logica de construcao do corpo aqui.
+        """
+
+        EmailService._configure()
+
+        try:
+            resend.Email.create({
+                "from": settings.email_from,
+                "to": [to_email],
+                "subject": subject,
+                "text": body
+            })
+            logger.info(f"[EMAIL] ✅ Email simples enviado para {to_email}")
+        except Exception as e:
+            logger.error(f"[EMAIL] ❌ Erro ao enviar email simples para {to_email}: {e}")
             raise ValueError(f"Erro ao enviar email: {e}")
         
     @staticmethod

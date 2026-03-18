@@ -1,14 +1,14 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Dict, Any
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Column
+from sqlalchemy import JSON
 
 
 class NotificationChannel(str, Enum):
     """Canais suportados para envio."""
-    WHATSAPP = "whatsapp"
     EMAIL = "email"
 
 
@@ -55,6 +55,11 @@ class Notification(SQLModel, table=True):
     scheduled_for: datetime = Field(index=True)
 
     sent_at: Optional[datetime] = Field(default=None)
+
+    template_data: Optional[Dict[str, Any]] = Field(
+        default=None,
+        sa_column=Column(JSON),
+    )
 
     #Optional precisa de default=None para não ser "required" no schema
     error_message: Optional[str] = Field(default=None, max_length=1000)

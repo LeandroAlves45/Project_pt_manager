@@ -1,13 +1,18 @@
 """
-Scheduler de notificações — APScheduler em background.
+Scheduler de notificacoes — APScheduler em background.
  
-Executa um job a cada 60 segundos que processa todas as notificações
-com estado "pending" cuja hora de envio já passou.
+Dois jobs:
+  1. dispatch_job (cada 60s)  — processa notificacoes pendentes e envia emails
+  2. token_cleanup_job (cada 60min) — remove tokens JWT expirados da active_tokens
+ 
+O dispatch_job usa template_data JSONB para montar os emails HTML.
+Mantem fallback para o formato pipe-delimitado antigo (TEMPLATE_HTML|...)
+para notificacoes criadas antes da migration 009 nao se perderem.
  
 Arquitectura de isolamento de erros:
-    Cada notificação é processada de forma independente dentro de um try/except.
-    Uma falha numa notificação não aborta as restantes — o job continua.
-    A notificação falhada é marcada como FAILED com a mensagem de erro.
+    Cada notificacao e processada dentro de um try/except independente.
+    Uma falha numa notificacao nao aborta as restantes — o job continua.
+    A notificacao falhada e marcada como FAILED com a mensagem de erro registada.
 """
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -24,19 +29,82 @@ logger = logging.getLogger(__name__)
 # Instância global do scheduler — iniciada uma vez no startup da aplicação
 scheduler = BackgroundScheduler()
 
+def dispatch_client_email(notification) -> None:
+    """
+    Envia email HTML para o cliente.
+ 
+    Lê os dados de template_data (JSONB) em vez de parsear o
+    formato pipe-delimitado fragil. Mantem fallback para notificacoes
+    antigas que ainda usam o formato legado.
+ 
+    O campo "type" dentro de template_data indica qual template usar.
+    Actualmente so existe "client_session_reminder".
+    """
+
+    # template_data JSONB
+    if notification.template_data:
+        data = notification.template_data
+
+        # Valida que os campos necessários estão presentes
+        required = ["client_name", "session_date", "session_time", "duration_minutes", "location"]
+        missing = required - set(data.keys())
+        if missing:
+            raise ValueError(f"Dados de template incompletos: faltam {', '.join(missing)}")
+        
+        EmailService.send_session_email(
+            to_email=notification.recipient,
+            client_name=data["client_name"],    
+            session_date=data["session_date"],
+            session_time=data["session_time"],
+            duration_minutes=int(data["duration_minutes"]),
+            location=data["location"],
+            trainer_logo_url=data.get("trainer_logo_url", ""),
+        )
+        logger.info(f"[EMAIL] ✅ Email HTML enviado para {notification.recipient} usando template_data")
+        return
+
+
+    # Formato pipe-delimitado 
+    # Processa notificações antigas que ainda estão na BD com o formato antigo
+    if notification.message and notification.message.startswith("TEMPLATE_HTML|"):
+        logger.warning(
+            f"[EMAIL] ⚠️ Notificação {notification.id[:8]} usando formato legado. "
+            f"Recomenda-se atualizar para template_data JSONB."
+        )
+        raw = notification.message.replace("TEMPLATE_HTML|", "")
+        parts = {}
+
+        for item in raw.split(";"):
+            if "=" in item:
+                key, value = item.partition("=")[::2]
+                parts[key.strip()] = value.strip()
+
+        EmailService.send_session_email(
+            to_email=notification.recipient,
+            client_name=parts.get("client_name", ""),
+            session_date=parts.get("session_date", ""),
+            session_time=parts.get("session_time", ""),
+            duration_minutes=int(parts.get("duration_minutes", "60")),
+            location=parts.get("location", ""),
+            trainer_logo_url=parts.get("trainer_logo_url", ""),
+        )
+        logger.info(f"[EMAIL] ✅ Email HTML enviado para {notification.recipient}.")
+        return
+    
+    raise ValueError("Notificação de email sem template_data ou formato válido")
+
+
 def dispatch_job():
 
     """
-    Job que processa e envia notificações de EMAIL pendentes.
-    
-    Executa a cada 60 segundos (configurado no scheduler).
-    
-    Fluxo:
-    1. Verifica o canal (EMAIL é o único suportado actualmente)
-    2. Se a mensagem começa com "TEMPLATE_HTML|" → email HTML com branding do trainer (para clientes)
-    3. Caso contrário → email de texto simples para o trainer
-    4. Marca como SENT ou FAILED consoante o resultado
-    5. Faz commit de todos os estados no final do job
+    Job que processa e envia notificacoes de EMAIL pendentes.
+ 
+    Executa a cada 60 segundos.
+ 
+    Logica de decisao por notificacao:
+    - Se recipient_type == CLIENT e template_data presente → email HTML (_dispatch_client_email)
+    - Se recipient_type == CLIENT e message comeca com TEMPLATE_HTML| → email HTML legado
+    - Caso contrario → email de texto simples (emails do trainer)
     """
     logger.info(f"[SCHEDULER] 🔄 Iniciando dispatch às {utc_now_datetime()}")
 
@@ -54,50 +122,35 @@ def dispatch_job():
                 if notification.channel == NotificationChannel.EMAIL:
                     logger.info(f"[EMAIL] 📧 Processando para {recipient}")
                 
-                    #verificar se é template HTML (cliente)
-                    if notification.message.startswith("TEMPLATE_HTML|"):
-                        # ========================================
-                        # EMAIL HTML PARA CLIENTE
-                        # ========================================
-                        
-                        # Extrai os pares chave=valor do template
-                        raw = notification.message.replace("TEMPLATE_HTML|", "")
-                        parts = dict(
-                            item.split("=", 1)
-                            for item in raw.split(";")
-                            if "=" in item
-                        )
+                    # Determina se é email HTML (cliente) ou email simples (trainer)
+                    is_html_email = (
+                        notification.template_data is not None or
+                        (notification.message and notification.message.startswith("TEMPLATE_HTML|"))
+                    )
 
-                        EmailService.send_session_email(
-                            to_email=notification.recipient,
-                            client_name=parts.get("client_name", ""),
-                            session_date=parts.get("session_date", ""),
-                            session_time=parts.get("session_time", ""),
-                            duration_minutes=int(parts.get("duration_minutes", "60")),
-                            location=parts.get("location", ""),
-                            trainer_logo_url=parts.get("trainer_logo_url", ""),
-                        )
-                        logger.info(f"[EMAIL] ✅ Email HTML enviado para {recipient}")
+                    if is_html_email:
+                        # Email HTML para o cliente
+                        dispatch_client_email(notification)
                             
                     else:
                         # ========================================
                         # EMAIL SIMPLES PARA TREINADOR
                         # ========================================
                         
-                        EmailService.send_trainer_reminder(
+                        EmailService.send_plain_email(
                             to_email=recipient,
                             subject="Lembrete de Sessão - PT Manager",
                             body=notification.message,
                         )
-
                         logger.info(f"[EMAIL] ✅ Email simples enviado para {recipient}")
-
-                    # Marcar como enviada com timestamp UTC
-                    notification.status = NotificationStatus.SENT
-                    notification.sent_at = utc_now_datetime()
-                    session.add(notification)
+                            
+        
+                        # Marcar como enviada com timestamp UTC
+                        notification.status = NotificationStatus.SENT
+                        notification.sent_at = utc_now_datetime()
+                        session.add(notification)
                     
-                    logger.info(f"[SUCCESS] ✅ Notificação {notification.id[:8]} processada com sucesso")
+                        logger.info(f"[SUCCESS] ✅ Notificação {notification.id[:8]} processada com sucesso")
 
                 # ================================================
                 # CANAL NÃO SUPORTADO
@@ -176,6 +229,14 @@ def start_scheduler():
         IntervalTrigger(seconds=60), 
         id="notification_dispatch", 
         replace_existing=True, 
+        max_instances=1
+    )
+
+    scheduler.add_job(
+        token_cleanup_job,
+        IntervalTrigger(minutes=60),
+        id="token_cleanup",
+        replace_existing=True,
         max_instances=1
     )
     

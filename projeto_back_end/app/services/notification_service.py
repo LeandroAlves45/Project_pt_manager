@@ -86,11 +86,14 @@ class NotificationService:
     @staticmethod
     def create_reminder_for_session(db: Session, training_session: TrainingSession) -> list[Notification]:
         """
-        Cria:
-        - Email para o PT
-
+        Cria notificacoes de lembrete para uma sessao agendada.
+ 
+        Cria ate dois registos:
+        - Um email HTML para o cliente (se tiver email)
+        - Um email simples para o trainer (se TRAINER_EMAIL estiver configurado)
         Nota: se scheduled_for já passou, não cria (evita spam imediato).
         """
+
         now_utc = utc_now_datetime()
         scheduled_for = NotificationService._compute_reminder_datetime_utc(training_session)
 
@@ -102,10 +105,12 @@ class NotificationService:
             )
             return []
 
-        #buscar dados do cliente para personalizar mensagem
+        # Buscar dados do cliente para personalizar mensagem
         client = db.get(Client, training_session.client_id)
         if not client:
             raise ValueError("Cliente não encontrado para a sessão.")
+        
+        trainer = db.get(User, training_session.owner_trainer_id)
 
         notifications: list[Notification] = []
 
@@ -117,26 +122,25 @@ class NotificationService:
             session_date = training_session.starts_at.strftime("%d/%m/%Y")
             session_time = training_session.starts_at.strftime("%H:%M")
 
-            trainer = db.get(User, training_session.owner_trainer_id)
-            logo_url = trainer.logo_url or ""
 
             # Mensagem estruturada para o scheduler processar
-            msg_client = (
-                f"TEMPLATE_HTML|"
-                f"client_name={client.full_name}|"
-                f"session_date={session_date}|"
-                f"session_time={session_time}|"
-                f"duration_minutes={training_session.duration_minutes}|"
-                f"location={training_session.location or 'A definir'}|"
-                f"trainer_logo_url={logo_url}"  
-            )
+            client_template_data = {
+                "type": "client_session_reminder",
+                "client_name": client.full_name,
+                "session_date": session_date,
+                "session_time": session_time,
+                "duration_minutes": training_session.duration_minutes,
+                "location": training_session.location or "A definir",
+                "trainer_logo_url": (trainer.logo_url or "") if trainer else "",
+            }
+
             notifications.append(
                 Notification(
                     session_id=training_session.id,
                     channel=NotificationChannel.EMAIL,
                     recipient_type=RecipientType.CLIENT,
                     recipient=client.email,
-                    message=msg_client,
+                    message=f"📅 Lembrete: Treino Amanhã - {session_date} às {session_time}",
                     scheduled_for=scheduled_for,
                     status=NotificationStatus.PENDING
                 )
@@ -144,7 +148,7 @@ class NotificationService:
 
             logger.info(f"[NOTIFICAÇÃO] ✅ Email HTML criado para cliente {client.email}")
         else:
-            logger.warning(f"[NOTIFICAÇÃO] ⚠️  Cliente {client.id[:8]} não tem email cadastrado")
+            logger.warning(f"[NOTIFICAÇÃO] ⚠️  Cliente {client.id[:8]} não tem email registado.")
         
         #---Email para o PT---
         if settings.trainer_email:
@@ -168,6 +172,7 @@ class NotificationService:
                     recipient_type=RecipientType.TRAINER,
                     recipient=settings.trainer_email,
                     message=msg_trainer,
+                    template_data=None,  # O email do trainer é simples, sem template
                     scheduled_for=scheduled_for,
                     status=NotificationStatus.PENDING
                 )

@@ -55,5 +55,9 @@ class User(SQLModel, table=True):
     # Campo para a isenção de billing, caso True passa imediatamente pelo Stripe
     is_exempt_from_billing: bool = Field(default=False) 
 
+    # Campos de convite para permitir que os trainers convidem clientes para o sistema, associando-os diretamente ao trainer.
+    invite_token_hash: Optional[str] = Field(default=None, max_length=64)  # Hash do token de convite
+    invite_token_expires_at: Optional[datetime] = Field(default=None)  # Data de expiração do token de convite
+
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
