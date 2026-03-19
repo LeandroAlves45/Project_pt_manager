@@ -15,9 +15,8 @@ não por email.
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, JSON
 from sqlmodel import SQLModel, Field
-from sqlalchemy.dialects.postgresql import JSONB
 from app.utils.time import utc_now_datetime
 
 class CheckIn(SQLModel, table=True):
@@ -50,14 +49,14 @@ class CheckIn(SQLModel, table=True):
     #   daily_water_intake_l: float
     #   stress_level: int       — 1 a 5
     #   injuries: str           — lesões ou dores novas
-    questionnaire: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    questionnaire: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON, nullable=True))
 
     #Notas do cliente ou do trainer
     client_notes: Optional[str] = Field(default=None, max_length=500)
     trainer_notes: Optional[str] = Field(default=None, max_length=500)
 
     #Fotos do progresso (URLs ou caminhos para as imagens)
-    photos: Optional[Dict[str, str]] = Field(default=None, sa_column=Column(JSONB, nullable=True)) #ex: {"front": "url1", "side": "url2", "back": "url3"}
+    photos: Optional[Dict[str, str]] = Field(default=None, sa_column=Column(JSON, nullable=True)) #ex: {"front": "url1", "side": "url2", "back": "url3"}
 
     requested_at: datetime = Field(default_factory=utc_now_datetime, sa_column=Column(DateTime(timezone=True), nullable=False))
     completed_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))

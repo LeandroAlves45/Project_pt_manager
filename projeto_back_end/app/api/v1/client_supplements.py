@@ -16,6 +16,7 @@ Endpoints:
 """
  
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
  
 from app.api.deps import db_session
@@ -131,6 +132,8 @@ async def list_client_supplements(
                 results.append(_build_response(assignment, supplement))
 
         return results
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail="Erro ao listar suplementos do cliente: ") from e
     
@@ -167,7 +170,11 @@ async def assign_supplement_to_client(
         session.refresh(assignment)
 
         return _build_response(assignment, supplement)
-    
+
+    except HTTPException:
+        raise
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Este suplemento já está atribuído a este cliente.")
     except Exception as e:
         raise HTTPException(status_code=400, detail="Erro ao atribuir suplemento ao cliente: ") from e
     
@@ -198,7 +205,9 @@ async def update_supplement_assignment(
         # Busca o suplemento para construir a resposta
         supplement = session.get(Supplement, assignment.supplement_id)
         return _build_response(assignment, supplement)
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail="Erro ao actualizar atribuição de suplemento: ") from e
     
@@ -218,5 +227,7 @@ async def remove_supplement_from_client(
 
         session.delete(assignment)
         commit_or_rollback(session)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail="Erro ao remover suplemento do cliente: ") from e

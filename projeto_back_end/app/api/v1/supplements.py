@@ -159,19 +159,16 @@ async def update_supplement(
         supplement = _get_supplement_or_404(supplement_id, session)
         _assert_trainer_owns(supplement, current_user.id)
 
-
-        if not supplement:
-            raise HTTPException(status_code=404, detail="Suplemento não encontrado")
-
-        #model_dump(exclude_unset=True) devolve apenas os campos que foram enviados no payload, permitindo atualizações parciais
         for key, value in payload.model_dump(exclude_unset=True).items():
             setattr(supplement, key, value)
 
-        supplement.updated_at = utc_now_datetime() #regista quando foi atualizado
-        session.add(supplement) 
+        supplement.updated_at = utc_now_datetime()
+        session.add(supplement)
         commit_or_rollback(session)
         session.refresh(supplement)
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail="Erro ao atualizar suplemento: ") from e
 
@@ -196,15 +193,17 @@ async def archive_supplement(
 
         if supplement.archived_at is not None:
             return SupplementRead.model_validate(supplement) #já arquivado, não faz nada
-    
-        supplement.archived_at = utc_now_datetime() #regista quando foi arquivado
-        supplement.updated_at = utc_now_datetime() #regista quando foi atualizado
+
+        supplement.archived_at = utc_now_datetime()
+        supplement.updated_at = utc_now_datetime()
         session.add(supplement)
-    
+
         commit_or_rollback(session)
         session.refresh(supplement)
+    except HTTPException:
+        raise
     except Exception as e:
-           raise HTTPException(status_code=400, detail="Erro ao atualizar data de arquivamento: ") from e
+        raise HTTPException(status_code=400, detail="Erro ao atualizar data de arquivamento: ") from e
 
     return SupplementRead.model_validate(supplement)
 
@@ -226,20 +225,22 @@ async def unarchive_supplement(
             raise HTTPException(status_code=404, detail="Suplemento não encontrado")
 
         if supplement.archived_at is not None:
-            supplement.archived_at = None #remove data de arquivamento para reativar
-            supplement.updated_at = utc_now_datetime() #regista quando foi atualizado
+            supplement.archived_at = None
+            supplement.updated_at = utc_now_datetime()
             session.add(supplement)
-       
+
             commit_or_rollback(session)
             session.refresh(supplement)
+    except HTTPException:
+        raise
     except Exception as e:
-            raise HTTPException(status_code=400, detail="Erro ao reativar suplemento: ") from e
+        raise HTTPException(status_code=400, detail="Erro ao reativar suplemento: ") from e
 
     return SupplementRead.model_validate(supplement)
 
 @router.delete("/{supplement_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_supplement(
-    supplement_id: int,
+    supplement_id: str,
     session: Session = Depends(db_session),
     current_user = Depends(require_trainer), #apenas trainers podem apagar
 ):
@@ -255,5 +256,7 @@ async def delete_supplement(
         session.delete(supplement)
         commit_or_rollback(session)
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail="Erro ao apagar suplemento: ") from e

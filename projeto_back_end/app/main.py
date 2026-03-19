@@ -15,6 +15,7 @@ Convenção de routers:
     dentro de cada router individualmente via Depends.
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -71,10 +72,29 @@ setup_logging()
 # Criação da instância FastAPI
 # ----------------------------------------------
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup — ordem não alterar
+    init_db()
+    from app.db.migrate import run_migrations
+    run_migrations()
+    with Session(engine) as session:
+        seed_pack_types(session)
+        seed_superuser(session)
+        seed_demo_data(session)
+    start_scheduler()
+
+    yield
+
+    # shutdown
+    shutdown_scheduler()
+
+
 app = FastAPI(
     title="PT Manager API",
     version= "0.1.0",
     description="API multi-tenant para gestão de clientes de Personal Trainers.",
+    lifespan=lifespan,
 )
 
 # -------------------------------------------------------
@@ -123,47 +143,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ----------------------------------------------
-# Hooks de ciclo de vida da aplicação
-# ----------------------------------------------
-    
-@app.on_event("startup")
-def on_startup() -> None:
-    """
-    Executado uma vez quando o servidor arranca.
- 
-    Ordem de execução no startup (não alterar):
-        1. init_db        — cria tabelas via SQLModel metadata
-        2. run_migrations — executa SQL idempotente (001 → 004...)
-        3. seed_pack_types — pack types por defeito
-        4. seed_superuser  — conta de superuser permanente
-        5. start_scheduler — job de notificações em background
-    """
-
-    # Cria tabelas que ainda não existam 
-    init_db()  
-    
-    from app.db.migrate import run_migrations
-    run_migrations()
-
-    with Session(engine) as session:
-        seed_pack_types(session)
-        seed_superuser(session)
-        seed_demo_data(session)
-
-    start_scheduler()
-
-
-    
-        
-
-@app.on_event("shutdown")
-def on_shutdown() -> None:
-    """
-    Executado quando o servidor é encerrado (SIGTERM em Railway).
-    Desliga o scheduler graciosamente para evitar jobs a meio.
-    """
-    shutdown_scheduler()
 
 # --------------------------------------
 # Dependência global de API Key — aplicada a TODAS os routers abaixo
@@ -176,17 +155,17 @@ common_dependencies = [Depends(require_api_key)]
 # --------------------------------------
 
 # auth e signup: login e registo não precisam de estar autenticados
-app.include_router(auth_router, prefix="/api/v1")
-app.include_router(signup_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1", dependencies=common_dependencies)
+app.include_router(signup_router, prefix="/api/v1", dependencies=common_dependencies)
 
-# Stripe webhooks: autenticados via HMAC signature, não via JWT
+# Stripe webhooks: autenticados via HMAC signature, não via JWT — sem API Key
 app.include_router(webhooks_router, prefix="/api/v1")
 
 # Health check: público para monitorização externa (ex: Railway, UptimeRobot)
-app.include_router(health_router, prefix="/api/v1")
+app.include_router(health_router, prefix="/api/v1", dependencies=common_dependencies)
 
 # Invite: os endpoints de convite
-app.include_router(invite_router, prefix="/api/v1")
+app.include_router(invite_router, prefix="/api/v1", dependencies=common_dependencies)
 
 
 # ---------------------------------------------------------------------------

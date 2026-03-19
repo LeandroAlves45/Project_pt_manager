@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 from sqlmodel import SQLModel, Field
 
 #---------------------------------------------
@@ -154,8 +154,6 @@ class AssessmentRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        #permite construir o schema a partit dos objetos ORM
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 

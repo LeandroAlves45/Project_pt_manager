@@ -15,7 +15,7 @@ Endpoints:
     PATCH  /assessments/{id}          — actualizar avaliação
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 from typing import List
 
@@ -63,7 +63,7 @@ def create_assessment(
         commit_or_rollback(session)
         session.refresh(assessment)
 
-        return InitialAssessmentRead.model_dump(assessment)
+        return InitialAssessmentRead.model_validate(assessment)
     
     except HTTPException:
         raise

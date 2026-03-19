@@ -68,6 +68,7 @@ def create_initial_assessment(
         notes=payload.notes,
     )
     session.add(assessment)
+    return assessment
 
 def update_initial_assessment(session: Session, assessment: InitialAssessment, payload: InitialAssessmentUpdate) -> InitialAssessment:
     """

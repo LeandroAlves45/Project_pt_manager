@@ -132,7 +132,9 @@ async def validate_invite_token(token: str, session: Session = Depends(db_sessio
             return InviteValidateResponse(valid=False, client_name="", message="Token expirado. Por favor peça um novo convite ao seu trainer.")
         
 
-        return InviteValidateResponse(valid=True, client_name=user.client.full_name)
+        client = session.get(Client, user.client_id)
+        client_name = client.full_name if client else ""
+        return InviteValidateResponse(valid=True, client_name=client_name)
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro ao validar token") from e

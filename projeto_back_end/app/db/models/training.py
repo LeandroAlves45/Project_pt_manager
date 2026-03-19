@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 from typing import Optional
 
-from pydantic import validator
+from pydantic import model_validator
 from sqlmodel import Field, SQLModel, UniqueConstraint
 from app.utils.time import utc_now
 
@@ -57,15 +57,11 @@ class TrainingPlan(SQLModel, table=True):
     updated_at: date = Field(default_factory=utc_now)
     archived_at: Optional[date] = Field(default=None, index=True)
 
-    @validator('end_date')
-    def end_date_after_start(cls, v, values):
-        """
-        Valida que a data de fim é posterior à data de início
-        """
-        if v and 'start_date' in values and values['start_date']:
-            if v < values['start_date']:
-                raise ValueError('end_date deve ser posterior a start_date')
-        return v
+    @model_validator(mode='after')
+    def end_date_after_start(self):
+        if self.end_date and self.start_date and self.end_date < self.start_date:
+            raise ValueError('end_date deve ser posterior a start_date')
+        return self
 
 #class para os dias do plano de treino
 class TrainingPlanDay(SQLModel, table=True):

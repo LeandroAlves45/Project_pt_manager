@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from typing import Optional, List, Literal
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 from sqlmodel import SQLModel, Field
 
 from app.db.models.nutrition import PLAN_TYPE_OPTIONS
@@ -55,8 +55,7 @@ class FoodRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 #---------------------------------------------
 #MacroSummary - Resumo de macros para um dia. Calculado via query customizada. Nunca armazenado diretamente.
@@ -236,8 +235,7 @@ class MealPlanItemRead(BaseModel):
     fats_g: float
     kcal: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 #---------------------------------------------
 #Macro Targets - Targets de macros definidos pelo PT para o plano alimentar. Calculados a partir do MacroCalculationResponse.
@@ -274,8 +272,7 @@ class MealPlanMealRead(BaseModel):
     items: List[MealPlanItemRead]
     meal_macros: MacroSummary #macros agregados da refeição, calculados no crud
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 #---------------------------------------------
 #MealPlan - Plano alimentar
@@ -325,6 +322,5 @@ class MealPlanRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 

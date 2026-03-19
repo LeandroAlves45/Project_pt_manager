@@ -16,9 +16,8 @@ import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, JSON
 from sqlmodel import SQLModel, Field
-from sqlalchemy.dialects.postgresql import JSONB
 from app.utils.time import utc_now_datetime
 
 
@@ -41,7 +40,7 @@ class InitialAssessment(SQLModel, table=True):
     body_fat: Optional[float] = Field(default=None, ge=0.0, le=100.0)
 
     # --------------------------------------------------
-    # Questionário de saúde e historial — armazenado como JSONB
+    # Questionário de saúde e historial — armazenado como JSON
     # Estrutura esperada do dict (todos opcionais):
     #
     # SECÇÃO 1 — IDENTIFICAÇÃO
@@ -87,7 +86,7 @@ class InitialAssessment(SQLModel, table=True):
     # --------------------------------------------------
     health_questionnaire: Optional[Dict[str, Any]] = Field(
         default=None,
-        sa_column=Column(JSONB, nullable=True)
+        sa_column=Column(JSON, nullable=True)
     )
 
     notes: Optional[str] = Field(default=None, max_length=1000)

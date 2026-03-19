@@ -16,6 +16,7 @@ import uuid
 from typing import Optional
 from datetime import datetime
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, SQLModel
 from app.utils.time import utc_now_datetime
 
@@ -24,7 +25,8 @@ class ClientSupplement(SQLModel, table=True):
     Registo de atribuicao de um suplemento a um cliente.
     """
 
-    __tablename__="client_supplements"
+    __tablename__ = "client_supplements"
+    __table_args__ = (UniqueConstraint("client_id", "supplement_id", name="uq_client_supplement"),)
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
 

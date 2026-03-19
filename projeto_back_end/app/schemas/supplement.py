@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class SupplementCreate(BaseModel):
@@ -30,6 +30,8 @@ class SupplementRead(BaseModel):
     Esquema para leitura de um suplemento.
     Inclui campos de auditoria e FK para o trainer que criou o suplemento.
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     description: Optional[str]
@@ -38,7 +40,6 @@ class SupplementRead(BaseModel):
     trainer_notes: Optional[str]
     archived_at: Optional[datetime]
     created_by_user_id: str
-    archived_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
 
